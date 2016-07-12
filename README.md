@@ -6,4 +6,5 @@ framerate.  The obstacles are pretty solid though any comments are welcome. The 
 game already but are buggy at best, and there is a rare but pretty substantial crash bug so enable them
 at your own risk right now(they are commented out).  The game runs on linux by design, and will run 
 on cygwin but will lock you out from typing after you cancel out of it at the moment. For the moment
-it is just ctrl-c to end the game.
+it is just ctrl-c to end the game. Right now the game auto scrolls but it can be set to scroll on 
+character movement.
