@@ -3,17 +3,22 @@ import sys
 import re
 
 class menu():
-    def __init__(self):
+    def __init__(self, filename, stdscr):
+	self.filename = filename
+	self.stdscr = stdscr
         self.menuChars = []
+	
 
     # reads file at filename and stores all characters (including newlines)
-    def readFile(self, filename):
-        menuFile = open(filename)
+    def readFile(self):
+        menuFile = open(self.filename)
         while True:
             c = menuFile.read(1)
             if not c:
                 break
-            self.menuChars.append(c)         
+            self.menuChars.append(c)        
+
+	menuFile.close() 
    
     ''' renders menu based on characters stored in menuChars.
         expects characters read from a menu text file in a certain format:
@@ -22,7 +27,7 @@ class menu():
             - menu options numbered in ascending order starting with 1
             - certain characters used (to achieve desired colors)
     '''
-    def renderMenu(self, stdscr):
+    def renderMenu(self):
         row = 0
         col = 0
         options = 0
@@ -39,18 +44,18 @@ class menu():
                 continue
             
             if c == '#':
-                stdscr.addch(row, col, c, curses.color_pair(1))
+                self.stdscr.addch(row, col, c, curses.color_pair(1))
             elif re.match(r'[,()`/\\_]', c): 
-                stdscr.addch(row, col, c, curses.color_pair(2))
+                self.stdscr.addch(row, col, c, curses.color_pair(2))
             elif re.match(r'[\d\.\w]', c):
-                stdscr.addch(row, col, c, curses.color_pair(4))
+                self.stdscr.addch(row, col, c, curses.color_pair(4))
             else:
-                stdscr.addch(row, col, c)
+                self.stdscr.addch(row, col, c)
 
-            if c == '1':
-                selectRow = row
-                selectCol = col - 2
-                stdscr.addch(selectRow, selectCol, '@', curses.color_pair(3))
+            if c == '1': #determine starting position of player cursor
+                cursRow = row
+                cursCol = col - 2
+                self.stdscr.addch(cursRow, cursCol, '@', curses.color_pair(3))
 
             if c.isdigit():
                 options += 1
@@ -59,30 +64,25 @@ class menu():
 
         curses.resizeterm(24, 80) #resize terminal back to standard
 
-        return options, selectRow, selectCol
+        return options, cursRow, cursCol
         
              
     def menuLaunch(self):
-        #curses setup
-        stdscr = curses.initscr()
-        stdscr.nodelay(1)
-        stdscr.keypad(1)
-        curses.cbreak()
-        curses.noecho()
-        curses.start_color()
-        curses.curs_set(0)
+        if len(self.menuChars) == 0:
+	    self.readFile()
+
         curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
         curses.init_pair(2, curses.COLOR_CYAN, curses.COLOR_BLACK)
         curses.init_pair(3, curses.COLOR_BLUE, curses.COLOR_BLACK)
         curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)
         
         #call renderMenu and get number of options and @ location
-        options, row, col = self.renderMenu(stdscr)
+        options, row, col = self.renderMenu()
         selectedOption = 1
-        stdscr.refresh()
+        #self.stdscr.refresh()
 
         while True: #menu input loop - user can press number or select & enter
-            c = stdscr.getch()
+            c = self.stdscr.getch()
             if c == ord('1'):
                 break
             if c == ord('2'):
@@ -91,26 +91,32 @@ class menu():
                 break
             if c == curses.KEY_UP:
                 if selectedOption > 1:
-                    stdscr.addch(row, col, ' ')
+                    self.stdscr.addch(row, col, ' ')
                     row -= 1
                     selectedOption -= 1
-                    stdscr.addch(row, col, '@', curses.color_pair(3))
-                    stdscr.refresh()
+                    self.stdscr.addch(row, col, '@', curses.color_pair(3))
+                    self.stdscr.refresh()
             if c == curses.KEY_DOWN:
                 if selectedOption < options:
-                    stdscr.addch(row, col, ' ')
+                    self.stdscr.addch(row, col, ' ')
                     row += 1
                     selectedOption += 1
-                    stdscr.addch(row, col, '@', curses.color_pair(3))
-                    stdscr.refresh() 
+                    self.stdscr.addch(row, col, '@', curses.color_pair(3))
+                    self.stdscr.refresh() 
             if c == curses.KEY_ENTER or c == 10:
-                if selectedOption == options:
-                    break
-                #handle pressing enter on other options       
-            
+            	if selectedOption >= 1 and selectedOption <= options:
+                    self.stdscr.clear()
+                    self.stdscr.refresh()
+                    return selectedOption
 
-        curses.endwin()
-        
-thisMenu = menu()            
-thisMenu.readFile("mainmenu.txt")
+'''
+stdscr = curses.initscr()
+stdscr.nodelay(1)
+stdscr.keypad(1)
+curses.cbreak()
+curses.noecho()
+curses.start_color()
+curses.curs_set(0)       
+thisMenu = menu("mainmenu.txt", stdscr)
 thisMenu.menuLaunch()
+'''

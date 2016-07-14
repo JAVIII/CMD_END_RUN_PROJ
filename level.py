@@ -9,10 +9,11 @@ from enemies import enemyGen
 
 class levelGen():
 
-    def __init__(self, levelGrid, height, width):
+    def __init__(self, levelGrid, height, width, stdscr):
         self.height = height
         self.width = width
         self.levelGrid = [[0 for i in range(width)] for j in range(height)]
+        self.stdscr = stdscr
 
     def levelBuild(self):
         for i in range(self.height):
@@ -78,7 +79,6 @@ class levelGen():
         calcCount = 0
 
         while(running):
-            stdscr = curses.initscr()
             timer = int(round(time.clock() * 1000))
 
             if calcStart == False:
@@ -100,10 +100,10 @@ class levelGen():
                 refreshCount = timer
                 refreshStart = True
                 gridStr = self.levelDraw()
-                stdscr.addstr(0, 0, gridStr)
+                self.stdscr.addstr(0, 0, gridStr)
             elif refreshStart == True and (timer - refreshCount) > 16:
                 refreshStart = False
-                stdscr.refresh()
+                self.stdscr.refresh()
 
 
 
