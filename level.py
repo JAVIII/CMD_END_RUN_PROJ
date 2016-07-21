@@ -156,7 +156,12 @@ class LevelGen:
 
                 self.level_update(top, bottom)
                 self.level_obstacles(top, bottom)
+                
                 #self.hero()
+                # check for collisions after level update
+                if self.levelGrid[self.heroRow][self.heroCol] != '@':
+                    return
+
                 enemy.enemy_spawn()
                 enemy.enemy_hunt(player_height, player_depth)
                 calc_start = False
