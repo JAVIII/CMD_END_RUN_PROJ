@@ -66,7 +66,10 @@ class menu():
 
         return options, cursRow, cursCol
         
-             
+    def clearRefresh(self):
+        self.stdscr.clear()
+        self.stdscr.refresh()
+            
     def menuLaunch(self):
         if len(self.menuChars) == 0:
 	    self.readFile()
@@ -83,12 +86,12 @@ class menu():
 
         while True: #menu input loop - user can press number or select & enter
             c = self.stdscr.getch()
-            if c == ord('1'):
-                break
-            if c == ord('2'):
-                break
-            if c == ord('3'):
-                break
+            if c == -1:
+                continue
+            
+            if c >= ord('1') and c <= (ord('0') + options): #number input
+                self.clearRefresh()
+                return int(chr(c)) 
             if c == curses.KEY_UP:
                 if selectedOption > 1:
                     self.stdscr.addch(row, col, ' ')
@@ -105,8 +108,7 @@ class menu():
                     self.stdscr.refresh() 
             if c == curses.KEY_ENTER or c == 10:
             	if selectedOption >= 1 and selectedOption <= options:
-                    self.stdscr.clear()
-                    self.stdscr.refresh()
+                    self.clearRefresh()
                     return selectedOption
 
 '''

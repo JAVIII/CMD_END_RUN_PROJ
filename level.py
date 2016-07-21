@@ -11,6 +11,8 @@ class LevelGen:
         self.width = width
         self.levelGrid = [[0 for i in range(width)] for j in range(height)]
         self.stdscr = stdscr
+	self.heroRow = width / 6
+	self.heroCol = height / 2        
 
     def level_build(self):
         for i in range(self.height):
@@ -51,11 +53,14 @@ class LevelGen:
                 if (i > top or i < bottom) and j == 0 and self.levelGrid[i][j] != ' ' and self.levelGrid[i][j] != '@':
                     self.levelGrid[i][j] = ' '
 
-    def hero(self):
+    def place_hero(self):
+        self.levelGrid[self.heroRow][self.heroCol] = '@'
+        '''
         for i in range(self.height):
             for j in range(self.width):
                 if i == 10 and j == 3:
                     self.levelGrid[i][j] = '@'
+        '''
 
     def level_draw(self, color, old_color, new_level):
         curses.init_pair(1, color[0], color[1])
@@ -91,6 +96,11 @@ class LevelGen:
                         self.stdscr.addstr(i, j, self.levelGrid[i][j], curses.color_pair(4))
                     else:
                         self.stdscr.addstr(i, j, self.levelGrid[i][j])
+    
+    def move_hero_row(self, moveBy):
+        self.levelGrid[self.heroRow][self.heroCol] = ' ' 
+        self.heroRow += moveBy
+        self.levelGrid[self.heroRow][self.heroCol] = '@'
 
     def level_run(self, running):
         color_setting = ColorSet()
@@ -107,9 +117,24 @@ class LevelGen:
         new_level = 0
         player_height = 11
         player_depth = 5
+        self.place_hero()
 
         while running:
             timer = int(round(time.clock() * 1000))
+
+            # temporary single player control code
+            c = self.stdscr.getch()
+            if c == curses.KEY_UP:
+                if self.levelGrid[self.heroRow - 1][self.heroCol] == ' ':
+                    self.move_hero_row(-1)
+                else: #handle collision
+                    return
+                    
+            elif c == curses.KEY_DOWN:
+                if self.levelGrid[self.heroRow + 1][self.heroCol] == ' ':
+                    self.move_hero_row(1)
+                else: #handle collision
+                    return
 
             if calc_start is False:
                 calc_count = timer
@@ -131,11 +156,11 @@ class LevelGen:
 
                 self.level_update(top, bottom)
                 self.level_obstacles(top, bottom)
-                self.hero()
+                #self.hero()
                 enemy.enemy_spawn()
                 enemy.enemy_hunt(player_height, player_depth)
                 calc_start = False
-                self.hero()
+                #self.hero()
 
             if refresh_start is False:
                 refresh_count = timer
