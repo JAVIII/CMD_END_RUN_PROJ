@@ -2,51 +2,43 @@ from random import randint
 
 
 class EnemyGen:
-    def __init__(self, living, height, width, top, bottom, levelGrid):
-        self.living = living
+    def __init__(self, height, width, top, bottom, level_grid, player_height, player_depth, level_count):
         self.height = height
         self.width = width
         self.top = top
         self.bottom = bottom
-        self.levelGrid = levelGrid
+        self.level_grid = level_grid
+        self.player_height = player_height
+        self.player_depth = player_depth
+        self.level_count = level_count
 
     def enemy_spawn(self):
+        spread = 500
+        level_spread = spread - (100 * self.level_count)
+        if level_spread <= 100:
+            level_spread = 100
+
         for i in range(self.height):
-            for j in range(self.width):
-                if (i > self.top and i < self.bottom) and j == self.width - 1 and self.levelGrid[i][j] != '#':
-                    rand = randint(0, 90)
-                    if rand == 1:
-                        self.levelGrid[i][j] = '&'
+            if self.top < i < self.bottom and self.level_grid[i][self.width - 1] != '#':
+                rand = randint(0, level_spread)
+                if rand == 1:
+                    self.level_grid[i][self.width - 1] = '&'
 
-                # to remove enemies as they reach left side of screen
-                if (i > self.top or i < self.bottom) and j == 0 and self.levelGrid[i][j] == '&':
-                    self.levelGrid[i][j] = ' '
-
-    def enemy_hunt(self, player_height, player_depth):
-        up_blocked = False
-        down_blocked = False
+    def enemy_hunt(self, yloc, xloc):
         hunt = 50
+        temp_y = yloc
+        temp_x = xloc
 
-        for i in range(self.height):
-            for j in range(self.width):
-                if self.levelGrid[i][j] == '&' and j > 0 and (j - player_depth) < hunt:
-                    if i > 0 and (self.levelGrid[i - 1][j] == '#' or self.levelGrid[i - 1][j] == '#'):
-                        up_blocked = True
-                    if i < self.height - 1 and (self.levelGrid[i + 1][j] == '#' or self.levelGrid[i + 1][j] == '&'):
-                        down_blocked = True
+        if (xloc - self.player_depth) < hunt:
+            rand = randint(0, 5)
+            if rand == 1:
+                if self.player_height < yloc and self.level_grid[yloc - 1][xloc] != '#' and self.level_grid[yloc- 1][xloc] != '&':
+                    temp_y = yloc - 1
+                if self.player_height > yloc and self.level_grid[yloc + 1][xloc] != '#' and self.level_grid[yloc + 1][xloc] != '&':
+                    temp_y = yloc + 1
+                if self.player_height < xloc and self.level_grid[yloc][xloc - 1] != '#' and self.level_grid[yloc][xloc - 1] != '&':
+                    temp_x = xloc - 1
 
-                    if player_height < i or (up_blocked == False and down_blocked == True):
-                        temp = self.levelGrid[i][j]
-                        self.levelGrid[i][j] = ' '
-                        self.levelGrid[i - 1][j] = temp
-                    if player_height > i or (up_blocked == True and down_blocked == False):
-                        temp = self.levelGrid[i][j]
-                        self.levelGrid[i][j] = ' '
-                        self.levelGrid[i + 1][j] = temp
-
-                    if player_height < j and self.levelGrid[i][j - 1] != '#' and self.levelGrid[i][j - 1] != '&':
-                        temp = self.levelGrid[i][j]
-                        self.levelGrid[i][j] = ' '
-                        self.levelGrid[i][j - 1] = temp
-                        up_blocked = False
-                        down_blocked = False
+        temp = self.level_grid[yloc][xloc]
+        self.level_grid[yloc][xloc] = ' '
+        self.level_grid[temp_y][temp_x] = temp
