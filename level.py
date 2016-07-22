@@ -116,6 +116,7 @@ class LevelGen:
         color = color_setting.get_colors()
         old_color = color
         counter = 0
+	score = 0
         top = 0
         bottom = self.height - 1
         refresh_start = False
@@ -124,24 +125,30 @@ class LevelGen:
         calc_count = 0
         new_level = 0
         level_length = 100
+        score_label = "Score: "
         self.place_hero()
 
+        #place score label in bottom left hand corner
+        self.stdscr.move(self.height, 0)
+        self.stdscr.addstr(score_label)
+        
         while running:
             timer = int(round(time.clock() * 1000))
-
+            
+            
             # temporary single player control code
             c = self.stdscr.getch()
             if c == curses.KEY_UP:
                 if self.level_grid[self.heroRow - 1][self.heroCol] == ' ':
                     self.move_hero_row(-1)
                 else:  # handle collision
-                    return
+                    return score
                     
             elif c == curses.KEY_DOWN:
                 if self.level_grid[self.heroRow + 1][self.heroCol] == ' ':
                     self.move_hero_row(1)
                 else:  # handle collision
-                    return
+                    return score
             player_height = self.heroRow
             player_depth = self.heroCol
 
@@ -165,10 +172,13 @@ class LevelGen:
                     new_level = 0
 
                 self.level_update(top, bottom, player_height, player_depth)
+		score += 1 # update score whenever level updates
+                self.stdscr.move(self.height, len(score_label))
+                self.stdscr.addstr(str(score))
 
                 # check for collisions after level update
                 if self.level_grid[self.heroRow][self.heroCol] != '@':
-                    return
+                    return score
 
                 calc_start = False
 
