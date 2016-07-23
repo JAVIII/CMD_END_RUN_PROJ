@@ -1,3 +1,18 @@
+# Authors                  Connor Pacala(Network Developer),
+#                          Joseph Vidal(Engine Developer),
+#                          Paul Zotz(Input and Tools Developer)
+# Date Created:            7/08/2016
+# Date Last Modified:      7/22/2016
+# File Name:               level.py
+#
+# Overview:                This is the primary game engine which generates the levels,
+#                          the obstacles in the levels, and calls on the enemy creation,
+#                          and player interaction algorithms. Controls player movement
+#                          based off of user input
+# Citations:               This is color information researched at
+#                          https://docs.python.org/2/howto/curses.html to incorporate
+#                          color into the the game presentation
+
 import time
 import curses
 from colorset import ColorSet
@@ -6,6 +21,7 @@ from enemies import EnemyGen
 
 
 class LevelGen:
+    # Initialize game
     def __init__(self, level_grid, height, width, stdscr):
         self.height = height
         self.width = width
@@ -15,31 +31,41 @@ class LevelGen:
         self.heroCol = height / 2
         self.level_count = 0
 
+    # build initial screen for running game
     def level_build(self):
         for i in range(self.height):
             for j in range(self.width):
                 self.level_grid[i][j] = ' '
 
+        # Places initial walls
         for i in range(self.height):
             for j in range(self.width):
                 if j > 0:
                     if i <= 0 or i >= self.height - 1:
                         self.level_grid[i][j] = '#'
 
+    # update the game at designated intervals to move the level. Additionally calls for creation
+    # of obstacles, and enemies and moves them as well
     def level_update(self, top, bottom, player_height, player_depth):
+        # Generate new obstacles
         self.level_obstacles(top, bottom)
+
+        # Generate and place enemies
         enemy = EnemyGen(self.height, self.width, top, bottom, self.level_grid, player_height, player_depth, self.level_count)
         enemy.enemy_spawn()
 
+        # Generate continuation of walls
         for i in range(self.height):
                 if i <= top or i >= bottom:
                     self.level_grid[i][self.width - 1] = '#'
 
+        # Enemies check for player to interact with
         for i in range(self.height):
             for j in range(self.width):
                 if self.level_grid[i][j] == '&' and j != 0:
                     enemy.enemy_hunt(i, j)
 
+        # Shift all designated elements left
         for i in range(self.height):
             for j in range(self.width):
                 if self.level_grid[i][j] != ' ' and self.level_grid[i][j] != '@' and j != 0:
@@ -47,11 +73,12 @@ class LevelGen:
                     self.level_grid[i][j] = ' '
                     self.level_grid[i][j - 1] = temp
 
+                # Remove elements which have reached the left side of the screen
                 if 0 <= i <= self.height and self.level_grid[i][0] != ' ' and self.level_grid[i][0] != '@':
                     self.level_grid[i][0] = ' '
 
+    # Creates obstacles at right side of the screen
     def level_obstacles(self, top, bottom):
-
         for i in range(self.height):
             if top < i < bottom:
                 rand = randint(0, 90)
@@ -61,23 +88,27 @@ class LevelGen:
                         for k in range(rand2):
                             self.level_grid[i + k][self.width - 1] = '#'
 
+    # Generate hero
     def place_hero(self):
         self.level_grid[self.heroRow][self.heroCol] = '@'
-        '''
-        for i in range(self.height):
-            for j in range(self.width):
-                if i == 10 and j == 3:
-                    self.level_grid[i][j] = '@'
-        '''
 
+    # Print game to screen
     def level_draw(self, color, old_color, new_level):
+
+        # Generate colors for this level
         curses.init_pair(1, color[0], color[1])
         curses.init_pair(2, color[2], color[3])
+
+        # Placeholder to preserve passed level's colors until no longer needed
         curses.init_pair(3, old_color[0], old_color[1])
         curses.init_pair(4, old_color[2], old_color[3])
+
+        # Change enemy color while hunting(NOT YET COMPLETE)
         curses.init_pair(5, curses.COLOR_RED, curses.COLOR_BLACK)
+
         count = 0
 
+        # Draws game to screen with appropriate color palettes
         for i in range(self.height):
             for j in range(self.width):
                 count += 1
@@ -104,13 +135,17 @@ class LevelGen:
                         self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(4))
                     else:
                         self.stdscr.addstr(i, j, self.level_grid[i][j])
-    
+
+    # Controls "hero" movement
     def move_hero_row(self, moveBy):
         self.level_grid[self.heroRow][self.heroCol] = ' '
         self.heroRow += moveBy
         self.level_grid[self.heroRow][self.heroCol] = '@'
 
+    # Primary game loop, provides all necessary information for game to run and initiates all game actions
     def level_run(self, running):
+
+        # Initial variable set
         self.level_count = 0
         color_setting = ColorSet()
         color = color_setting.get_colors()
@@ -126,8 +161,9 @@ class LevelGen:
         level_length = 100
         self.place_hero()
 
+        # Primary loop
         while running:
-            timer = int(round(time.clock() * 1000))
+            timer = int(round(time.clock() * 1000))  # Referenced to maintain updates and refresh rate
 
             # temporary single player control code
             c = self.stdscr.getch()
@@ -145,10 +181,11 @@ class LevelGen:
             player_height = self.heroRow
             player_depth = self.heroCol
 
+            # Update all aspects of game at designated intervals
             if calc_start is False:
                 calc_count = timer
                 calc_start = True
-            elif calc_start and (timer - calc_count) > 100:
+            elif calc_start and (timer - calc_count) > 100:  # Interval to update game elements(milliseconds)
                 counter += 1
                 new_level += 1
                 if counter == level_length:
@@ -158,6 +195,7 @@ class LevelGen:
                     counter = 0
                     self.level_count += 1
 
+                # Change color palette upon reaching new level
                 elif counter == level_length - 1:
                     old_color = color
                     while old_color == color:
@@ -172,10 +210,11 @@ class LevelGen:
 
                 calc_start = False
 
+            # Refreash screen at designated intervals
             if refresh_start is False:
                 refresh_count = timer
                 refresh_start = True
                 self.level_draw(color, old_color, new_level)
-            elif refresh_start and (timer - refresh_count) > 16:
+            elif refresh_start and (timer - refresh_count) > 16:  # Interval to refresh game screen(milliseconds)
                 refresh_start = False
                 self.stdscr.refresh()
