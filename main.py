@@ -16,6 +16,7 @@
 import curses
 from level import LevelGen
 from menu import menu
+from highscore import highScore
 
 # set up curses - to be passed to menu object, game engine, etc
 stdscr = curses.initscr()
@@ -30,7 +31,12 @@ curses.curs_set(0)
 newGameChoice = 1
 highScoreChoice = 2
 quitChoice = 3
-gameMenu = menu("mainmenu.txt", stdscr)
+gameMenu = menu("mainmenu.txt", "highscore.txt", stdscr)
+scoreTracker = highScore("highscore.xml")
+scoreTracker.readFile() #read high score file
+scoreTracker.readScore() 
+currentHighScore = scoreTracker.getScore()
+
 while True:  # return to menu until user chooses to quit
 
     menuChoice = gameMenu.menuLaunch() 
@@ -38,16 +44,23 @@ while True:  # return to menu until user chooses to quit
         break
 
     if menuChoice == highScoreChoice:
-        # launch high score screen here
-        break
+        gameMenu.highScoreLaunch(currentHighScore)
 
     if menuChoice == newGameChoice:
         grid = []
         height = 23
         width = 79
         running = True
-    gridMaker = LevelGen(grid, height, width, stdscr)  # Initialize the game
-    gridMaker.level_build()  # Generate initial game screen
-    gridMaker.level_run(running)  # run primary game loop
+
+    	gridMaker = LevelGen(grid, height, width, stdscr) #Initialize the game
+    	gridMaker.level_build() # Generate initial game screen
+    	score = gridMaker.level_run(running)  # run primary game loop - returns final score once game is over
+        # check for new high score and write to file if found
+        if score > currentHighScore: # check for new high score
+            currentHighScore = score
+            scoreTracker.setScore(currentHighScore) # set current high score    
+            scoreTracker.writeScore() # write current high score to high score file
+
+	stdscr.clear() 
 
 
