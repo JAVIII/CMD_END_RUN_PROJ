@@ -1,3 +1,19 @@
+# Authors                  Connor Pacala(Network Developer),
+#                          Joseph Vidal(Engine Developer),
+#                          Paul Zotz(Input and Tools Developer)
+# Date Created:            7/10/2016
+# Date Last Modified:      7/22/2016
+# File Name:               menu.py
+#
+# Overview:     The menu class is used to read simple menu/screen designs in 
+#               text files, generate menus/screens in curses based on expected
+#               ASCII values, and return any relevant user selections to main.
+#            
+#          
+# Citations:    Curses code based off examples found in documentation:
+#	        https://docs.python.org/2/library/curses.html
+			
+
 import curses
 import sys
 import re

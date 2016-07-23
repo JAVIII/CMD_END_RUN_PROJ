@@ -1,3 +1,17 @@
+# Authors                  Connor Pacala(Network Developer),
+#                          Joseph Vidal(Engine Developer),
+#                          Paul Zotz(Input and Tools Developer)
+# Date Created:            7/19/2016
+# Date Last Modified:      7/22/2016
+# File Name:               highscore.py
+#
+# Overview: 	Class to read, update, and write a single high score number.
+#	    	Uses Python ElementTree library to create, read from, and write
+#	    	to an xml file. 
+#          
+# Citations: 	Python ElementTree documentation:
+#	     	https://docs.python.org/2/library/xml.etree.elementtree.html
+			
 import xml.etree.ElementTree as ET
 import os.path
 
