@@ -172,26 +172,19 @@ class LevelGen:
             timer = int(round(time.clock() * 1000)) # Referenced to maintain updates and refresh rate
 
             # temporary single player control code
-				
-				#calculate direction (will eval to 1, -1, or 0)
-				dir = (c == curses.KEY_DOWN) - (c == curses.KEY_UP)
-				if self.level_grid[self.heroRow - 1][self.heroCol] == ' ':
-					  self.move_hero_row(-1)
-				 else:  # handle collision
-					  return score
-				
-#            c = self.stdscr.getch()
-#            if c == curses.KEY_UP:
-#                if self.level_grid[self.heroRow - 1][self.heroCol] == ' ':
-#                    self.move_hero_row(-1)
-#                else:  # handle collision
-#                    return score
+
+            c = self.stdscr.getch()
+            if c == curses.KEY_UP:
+                if self.level_grid[self.heroRow - 1][self.heroCol] == ' ':
+                    self.move_hero_row(-1)
+                else:  # handle collision
+                    return score
                     
-#            elif c == curses.KEY_DOWN:
-#                if self.level_grid[self.heroRow + 1][self.heroCol] == ' ':
-#                    self.move_hero_row(1)
-#                else:  # handle collision
-#                    return score
+            elif c == curses.KEY_DOWN:
+                if self.level_grid[self.heroRow + 1][self.heroCol] == ' ':
+                    self.move_hero_row(1)
+                else:  # handle collision
+                    return score
 
             player_height = self.heroRow
             player_depth = self.heroCol
