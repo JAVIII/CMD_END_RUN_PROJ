@@ -33,7 +33,7 @@ highScoreChoice = 2
 quitChoice = 3
 gameMenu = menu("mainmenu.txt", "highscore.txt", stdscr)
 scoreTracker = highScore("highscore.xml")
-scoreTracker.readFile() #read high score file
+scoreTracker.readFile()  # read high score file
 scoreTracker.readScore() 
 currentHighScore = scoreTracker.getScore()
 
@@ -52,15 +52,15 @@ while True:  # return to menu until user chooses to quit
         width = 79
         running = True
 
-    	gridMaker = LevelGen(grid, height, width, stdscr) #Initialize the game
-    	gridMaker.level_build() # Generate initial game screen
-    	score = gridMaker.level_run(running)  # run primary game loop - returns final score once game is over
+        gridMaker = LevelGen(grid, height, width, stdscr)  # Initialize the game
+        gridMaker.level_build() # Generate initial game screen
+        score = gridMaker.level_run(running)  # run primary game loop - returns final score once game is over
         # check for new high score and write to file if found
         if score > currentHighScore: # check for new high score
             currentHighScore = score
             scoreTracker.setScore(currentHighScore) # set current high score    
             scoreTracker.writeScore() # write current high score to high score file
 
-	stdscr.clear() 
+    stdscr.clear()
 
 

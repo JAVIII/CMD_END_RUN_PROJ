@@ -65,6 +65,12 @@ class LevelGen:
                 if self.level_grid[i][j] == '&' and j != 0:
                     enemy.enemy_hunt(i, j)
 
+        # Checks for enemy that can no longer chase character and destroys them graphically if they can not
+        for i in range(self.height):
+            for j in range(self.width):
+                if j != 0:
+                    enemy.enemy_death(i, j)
+
         # Shift all designated elements left
         for i in range(self.height):
             for j in range(self.width):
@@ -104,7 +110,11 @@ class LevelGen:
         curses.init_pair(4, old_color[2], old_color[3])
 
         # Change enemy color while hunting(NOT YET COMPLETE)
-        curses.init_pair(5, curses.COLOR_RED, curses.COLOR_BLACK)
+        curses.init_pair(5, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+        curses.init_pair(6, curses.COLOR_RED, curses.COLOR_BLACK)
+        curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)
+        curses.init_pair(8, curses.COLOR_WHITE, curses.COLOR_BLACK)
+        curses.init_pair(9, curses.COLOR_BLACK, curses.COLOR_BLACK)
 
         count = 0
 
@@ -118,6 +128,16 @@ class LevelGen:
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(1))
                     elif self.level_grid[i][j] == '&':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(2))
+                    elif self.level_grid[i][j] == '%':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(5) | curses.A_BOLD | curses.A_REVERSE)
+                    elif self.level_grid[i][j] == '$':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(6) | curses.A_BOLD | curses.A_REVERSE)
+                    elif self.level_grid[i][j] == '*':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(7) | curses.A_BOLD | curses.A_REVERSE)
+                    elif self.level_grid[i][j] == '+':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(8) | curses.A_BOLD | curses.A_REVERSE)
+                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(9))
                     else:
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n")
                     count = 0
@@ -126,6 +146,16 @@ class LevelGen:
                         self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(1))
                     elif self.level_grid[i][j] == '&':
                         self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(2))
+                    elif self.level_grid[i][j] == '%':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(5) | curses.A_BOLD | curses.A_REVERSE)
+                    elif self.level_grid[i][j] == '$':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(6) | curses.A_BOLD | curses.A_REVERSE)
+                    elif self.level_grid[i][j] == '*':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(7) | curses.A_BOLD | curses.A_REVERSE)
+                    elif self.level_grid[i][j] == '+':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(8) | curses.A_BOLD | curses.A_REVERSE)
+                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(9))
                     else:
                         self.stdscr.addstr(i, j, self.level_grid[i][j])
                 else:
@@ -133,6 +163,16 @@ class LevelGen:
                         self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(3))
                     elif self.level_grid[i][j] == '&':
                         self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(4))
+                    elif self.level_grid[i][j] == '%':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(5) | curses.A_BOLD | curses.A_REVERSE)
+                    elif self.level_grid[i][j] == '$':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(6) | curses.A_BOLD | curses.A_REVERSE)
+                    elif self.level_grid[i][j] == '*':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(7) | curses.A_BOLD | curses.A_REVERSE)
+                    elif self.level_grid[i][j] == '+':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(8) | curses.A_BOLD | curses.A_REVERSE)
+                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(9))
                     else:
                         self.stdscr.addstr(i, j, self.level_grid[i][j])
 
@@ -151,7 +191,7 @@ class LevelGen:
         color = color_setting.get_colors()
         old_color = color
         counter = 0
-	score = 0
+        score = 0
         top = 0
         bottom = self.height - 1
         refresh_start = False
@@ -163,11 +203,11 @@ class LevelGen:
         score_label = "Score: "
         self.place_hero()
 
-        #place score label in bottom left hand corner
+        # place score label in bottom left hand corner
         self.stdscr.move(self.height, 0)
         self.stdscr.addstr(score_label)
         
-	# Primary loop
+        # Primary loop
         while running:
             timer = int(round(time.clock() * 1000)) # Referenced to maintain updates and refresh rate
 
@@ -211,7 +251,7 @@ class LevelGen:
                     new_level = 0
 
                 self.level_update(top, bottom, player_height, player_depth)
-		score += 1 # update score whenever level updates
+                score += 1 # update score whenever level updates
                 self.stdscr.move(self.height, len(score_label))
                 self.stdscr.addstr(str(score))
 

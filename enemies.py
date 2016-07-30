@@ -61,3 +61,37 @@ class EnemyGen:
         temp = self.level_grid[yloc][xloc]
         self.level_grid[yloc][xloc] = ' '
         self.level_grid[temp_y][temp_x] = temp
+
+    def enemy_death(self, yloc, xloc):
+        if self.level_grid[yloc][xloc] == '&' and xloc < self.player_depth - 2:
+            self.level_grid[yloc][xloc] = '+'
+        elif self.level_grid[yloc][xloc] == '+' and self.level_grid[yloc][xloc - 1] != '$':
+            self.level_grid[yloc + 1][xloc] = '$'
+            self.level_grid[yloc - 1][xloc] = '$'
+            self.level_grid[yloc][xloc + 1] = '$'
+            self.level_grid[yloc][xloc - 1] = '$'
+            self.level_grid[yloc + 1][xloc + 1] = '%'
+            self.level_grid[yloc - 1][xloc + 1] = '%'
+            self.level_grid[yloc + 1][xloc - 1] = '%'
+            self.level_grid[yloc - 1][xloc - 1] = '%'
+        elif self.level_grid[yloc][xloc] == '+' and self.level_grid[yloc][xloc - 1] == '$' and self.level_grid[yloc][xloc - 2] != '*':
+            self.level_grid[yloc + 2][xloc] = '*'
+            self.level_grid[yloc - 2][xloc] = '*'
+            self.level_grid[yloc][xloc + 2] = '*'
+            self.level_grid[yloc][xloc - 2] = '*'
+        elif self.level_grid[yloc][xloc] == '+' and self.level_grid[yloc][xloc - 1] == '$' and self.level_grid[yloc][xloc - 2] == '*':
+            self.level_grid[yloc][xloc] = '!'
+        elif self.level_grid[yloc][xloc] == '!' and self.level_grid[yloc][xloc - 2] == '*':
+            self.level_grid[yloc + 1][xloc] = '~'
+            self.level_grid[yloc - 1][xloc] = '~'
+            self.level_grid[yloc][xloc + 1] = '~'
+            self.level_grid[yloc][xloc - 1] = '~'
+            self.level_grid[yloc + 1][xloc + 1] = '~'
+            self.level_grid[yloc - 1][xloc + 1] = '~'
+            self.level_grid[yloc + 1][xloc - 1] = '~'
+            self.level_grid[yloc - 1][xloc - 1] = '~'
+        elif self.level_grid[yloc][xloc] == '!' and self.level_grid[yloc][xloc - 1] == '~':
+            self.level_grid[yloc + 2][xloc] = '`'
+            self.level_grid[yloc - 2][xloc] = '`'
+            self.level_grid[yloc][xloc + 2] = '`'
+            self.level_grid[yloc][xloc - 2] = '`'
