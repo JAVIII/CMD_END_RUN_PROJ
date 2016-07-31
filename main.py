@@ -2,7 +2,7 @@
 #                          Joseph Vidal(Engine Developer),
 #                          Paul Zotz(Input and Tools Developer)
 # Date Created:            7/08/2016
-# Date Last Modified:      7/22/2016
+# Date Last Modified:      7/31/2016
 # File Name:               main.py
 #
 # Overview:                This is a two-dimensional side scrolling endless runner
@@ -31,7 +31,11 @@ curses.curs_set(0)
 newGameChoice = 1
 highScoreChoice = 2
 quitChoice = 3
-gameMenu = menu("mainmenu.txt", "highscore.txt", stdscr)
+menuFile = "mainmenu.txt"
+hScoreFile = "highscore.txt"
+gameOverFile = "gameover.txt"
+waitingFile = "waitforplayers.txt"
+gameMenu = menu(menuFile, hScoreFile, gameOverFile, waitingFile,  stdscr)
 scoreTracker = highScore("highscore.xml")
 scoreTracker.readFile()  # read high score file
 scoreTracker.readScore() 
@@ -39,6 +43,7 @@ currentHighScore = scoreTracker.getScore()
 
 while True:  # return to menu until user chooses to quit
 
+    newHighScore = False
     menuChoice = gameMenu.menuLaunch() 
     if menuChoice == quitChoice:
         break
@@ -47,6 +52,8 @@ while True:  # return to menu until user chooses to quit
         gameMenu.highScoreLaunch(currentHighScore)
 
     if menuChoice == newGameChoice:
+        gameMenu.waitForPlayersLaunch()
+        # new game setup
         grid = []
         height = 23
         width = 79
@@ -57,9 +64,12 @@ while True:  # return to menu until user chooses to quit
         score = gridMaker.level_run(running)  # run primary game loop - returns final score once game is over
         # check for new high score and write to file if found
         if score > currentHighScore: # check for new high score
+            newHighScore = True
             currentHighScore = score
             scoreTracker.setScore(currentHighScore) # set current high score    
-            scoreTracker.writeScore() # write current high score to high score file
+            scoreTracker.writeScore() # write current high score 	
+
+        gameMenu.gameOverLaunch(score, newHighScore)
 
     stdscr.clear()
 

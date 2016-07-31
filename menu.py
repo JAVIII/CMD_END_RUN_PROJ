@@ -2,7 +2,7 @@
 #                          Joseph Vidal(Engine Developer),
 #                          Paul Zotz(Input and Tools Developer)
 # Date Created:            7/10/2016
-# Date Last Modified:      7/22/2016
+# Date Last Modified:      7/31/2016
 # File Name:               menu.py
 #
 # Overview:     The menu class is used to read simple menu/screen designs in 
@@ -17,14 +17,19 @@
 import curses
 import sys
 import re
+import time
 
 class menu():
-    def __init__(self, menuFile, highScoreFile, stdscr):
+    def __init__(self, menuFile, highScoreFile, gameOverFile, waitingFile, stdscr):
 	self.menuFile = menuFile
         self.highScoreFile = highScoreFile
+        self.gameOverFile = gameOverFile
+        self.waitingFile = waitingFile
 	self.stdscr = stdscr
         self.menuChars = []
         self.highScoreChars = []	
+        self.gameOverChars = []
+        self.waitingChars = []
 
     # reads file at filename and stores all characters (including newlines)
     def readFile(self, filename):
@@ -65,7 +70,7 @@ class menu():
             
             if c == '#':
                 self.stdscr.addch(row, col, c, curses.color_pair(1))
-            elif re.match(r'[,()`/\\_]', c): 
+            elif re.match(r'[,()`/\\_|]', c): 
                 self.stdscr.addch(row, col, c, curses.color_pair(2))
             elif re.match(r'[\d\.\w]', c):
                 self.stdscr.addch(row, col, c, curses.color_pair(4))
@@ -140,6 +145,7 @@ class menu():
         
         options, row, col = self.renderScreen(self.highScoreChars)
         self.stdscr.addstr(row, col, str(score))
+        self.stdscr.refresh()
   
         while True:
             c = self.stdscr.getch()
@@ -147,6 +153,61 @@ class menu():
                 continue
             if c == curses.KEY_ENTER or c == 10 or c == 13:
                 break
+
+    def gameOverLaunch(self, score, newScore):
+        row = 12
+        col = 30
+
+        if len(self.gameOverChars) == 0:
+            self.gameOverChars = self.readFile(self.gameOverFile)
+       
+        self.stdscr.clear()
+        self.renderScreen(self.gameOverChars)
+        if newScore: 
+            self.stdscr.move(row, col)
+            self.stdscr.addstr("New high score!")
+
+        self.stdscr.move(row + 1, col)
+        self.stdscr.addstr("SCORE: " + str(score))
+        self.stdscr.refresh()
+        
+        while True:
+            c = self.stdscr.getch()
+            if c == -1:
+                continue
+            if c == curses.KEY_ENTER or c == 10 or c == 13:
+                break
+
+    def waitForPlayersLaunch(self):
+        readyPlayer1 = False
+        readyPlayer2 = False
+        gameStartString = "Starting game in... "
+        row = 12
+        col = 27
+    
+        if len(self.waitingChars) == 0:
+            self.waitingChars = self.readFile(self.waitingFile)
+        
+        self.renderScreen(self.waitingChars)
+
+        # integrate with netcode to detect player connections if possible
+        while not readyPlayer1 and not readyPlayer2:
+            readyPlayer1 = True
+            readyPlayer2 = True
+
+        # set countdown to game start 
+        self.stdscr.move(row, col)
+        self.stdscr.addstr(gameStartString)
+        col += len(gameStartString)
+        self.stdscr.move(row, col)
+        self.stdscr.refresh()
+        countdown = 0 #set countdown to number of seconds to count down from
+        while countdown > 0:
+            self.stdscr.move(row, col)
+            self.stdscr.addstr(str(countdown))
+            self.stdscr.refresh()
+            time.sleep(1)
+            countdown -= 1
 
 '''
 stdscr = curses.initscr()
