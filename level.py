@@ -75,14 +75,21 @@ class LevelGen:
         # Shift all designated elements left
         for i in range(self.height):
             for j in range(self.width):
-                if self.level_grid[i][j] != ' ' and self.level_grid[i][j] != '@' and j != 0 and self.level_grid[i][j] != '-':
+                if self.level_grid[i][j] != ' ' and self.level_grid[i][j] != '@' and j != 0:
                     temp = self.level_grid[i][j]
-                    self.level_grid[i][j] = ' '
-                    # make sure terrain doesn't go through a laser beam
-                    if self.level_grid[i][j] == '-':
+                    # make sure laser chars aren't shifted
+                    if temp == '-':
                         temp = ' '
-                    self.level_grid[i][j - 1] = temp
+                        # fix to make sure char isn't shifted through laser
+                        if j<self.width-1 and self.level_grid[i][j + 1] != ' ':
+			    for k in self.lasers:
+                                if k.getRow() == i and k.getCol() == j:
+                                    self.lasers.remove(k)
+                            
+                            self.level_grid[i][j + 1] = ' '
 
+	            self.level_grid[i][j] = ' '
+                    self.level_grid[i][j - 1] = temp
                 # Remove elements which have reached the left side of the screen
                 if 0 <= i <= self.height and self.level_grid[i][0] != ' ' and self.level_grid[i][0] != '@':
                     self.level_grid[i][0] = ' '     
@@ -191,11 +198,12 @@ class LevelGen:
 
     def update_lasers(self):
         # move all laser objects right
+
         for i in self.lasers:
             row = i.getRow()
             col = i.getCol()
+        
             self.level_grid[row][col] = ' '
-    
             on_map = i.advance()
             if on_map:
                 row = i.getRow()
