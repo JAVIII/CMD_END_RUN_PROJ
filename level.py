@@ -218,12 +218,6 @@ class LevelGen:
                 elif prevChar == '#' or thisChar == '#':
                     self.level_grid[row][col] = ' '
                     self.lasers.remove(i)
-
-                # prevent error where laser passes through item
-                if prevChar != '@' and prevChar != ' ':
-                    self.level_grid[row][col - 1] = ' '
-                    self.lasers.remove(i)
-                    laser_count -= 1
             else:
                 self.lasers.remove(i)
 
