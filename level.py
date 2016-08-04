@@ -257,8 +257,6 @@ class LevelGen:
             timer = int(round(time.clock() * 1000)) # Referenced to maintain updates and refresh rate
 
             # temporary single player control code
-            run = False
-            shoot = False
             c = self.stdscr.getch()
             if c == curses.KEY_UP:
                 if self.level_grid[self.heroRow - 1][self.heroCol] == ' ':
@@ -270,8 +268,6 @@ class LevelGen:
                     self.move_hero_row(1)
                 else:  # handle collision
                     return score
-            elif c == curses.KEY_RIGHT:
-                calc_count -= 1
             elif c == ord(' '): # space bar used to shoot lasers
             
                 if laser_count > 0:
