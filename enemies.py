@@ -58,40 +58,104 @@ class EnemyGen:
                     temp_x = xloc - 1
 
         # Move enemy to decided upon location
-        temp = self.level_grid[yloc][xloc]
-        self.level_grid[yloc][xloc] = ' '
-        self.level_grid[temp_y][temp_x] = temp
+        if self.level_grid[yloc][xloc] != '#':
+            temp = self.level_grid[yloc][xloc]
+            self.level_grid[yloc][xloc] = ' '
+            self.level_grid[temp_y][temp_x] = temp
 
     def enemy_death(self, yloc, xloc):
-        if self.level_grid[yloc][xloc] == '&' and xloc < self.player_depth - 2:
+        if (self.level_grid[yloc][xloc] == '&' and (xloc < self.player_depth - 2 or self.level_grid[yloc - 1][xloc] == ',')) or self.level_grid[yloc][xloc] == '}':
             self.level_grid[yloc][xloc] = '+'
+            self.level_grid[yloc][xloc + 2] = ' '
+            self.level_grid[yloc][xloc - 2] = ' '
+            self.level_grid[yloc][xloc + 1] = ' '
+            self.level_grid[yloc][xloc - 1] = ' '
+
+            if yloc < self.bottom and self.level_grid[yloc + 1][xloc] != '#':
+                self.level_grid[yloc + 1][xloc] = ' '
+                self.level_grid[yloc + 1][xloc + 1] = ' '
+                self.level_grid[yloc + 1][xloc - 1] = ' '
+
+            if yloc + 2 < self.bottom and self.level_grid[yloc + 2][xloc] != '#':
+                self.level_grid[yloc + 2][xloc] = ' '
+
+            if yloc - 1 > self.top and self.level_grid[yloc - 1][xloc] != '#':
+                self.level_grid[yloc - 1][xloc] = ' '
+                self.level_grid[yloc - 1][xloc + 1] = ' '
+                self.level_grid[yloc - 1][xloc - 1] = ' '
+
+            if yloc - 2 > self.top and self.level_grid[yloc - 2][xloc] != '#':
+                self.level_grid[yloc - 2][xloc] = ' '
+
         elif self.level_grid[yloc][xloc] == '+' and self.level_grid[yloc][xloc - 1] != '$':
-            self.level_grid[yloc + 1][xloc] = '$'
-            self.level_grid[yloc - 1][xloc] = '$'
             self.level_grid[yloc][xloc + 1] = '$'
             self.level_grid[yloc][xloc - 1] = '$'
-            self.level_grid[yloc + 1][xloc + 1] = '%'
-            self.level_grid[yloc - 1][xloc + 1] = '%'
-            self.level_grid[yloc + 1][xloc - 1] = '%'
-            self.level_grid[yloc - 1][xloc - 1] = '%'
+
+            if yloc + 1 < self.bottom and self.level_grid[yloc + 1][xloc] != '#':
+                self.level_grid[yloc + 1][xloc] = '$'
+                self.level_grid[yloc + 1][xloc + 1] = '%'
+                self.level_grid[yloc + 1][xloc - 1] = '%'
+
+            if yloc - 1 > self.top and self.level_grid[yloc - 1][xloc] != '#':
+                self.level_grid[yloc - 1][xloc] = '$'
+                self.level_grid[yloc - 1][xloc + 1] = '%'
+                self.level_grid[yloc - 1][xloc - 1] = '%'
+
         elif self.level_grid[yloc][xloc] == '+' and self.level_grid[yloc][xloc - 1] == '$' and self.level_grid[yloc][xloc - 2] != '*':
-            self.level_grid[yloc + 2][xloc] = '*'
-            self.level_grid[yloc - 2][xloc] = '*'
             self.level_grid[yloc][xloc + 2] = '*'
             self.level_grid[yloc][xloc - 2] = '*'
+
+            if yloc + 2 < self.bottom and self.level_grid[yloc + 2][xloc] != '#':
+                self.level_grid[yloc + 2][xloc] = '*'
+
+            if yloc - 2 > self.top and self.level_grid[yloc - 2][xloc] != '#':
+                self.level_grid[yloc - 2][xloc] = '*'
+
         elif self.level_grid[yloc][xloc] == '+' and self.level_grid[yloc][xloc - 1] == '$' and self.level_grid[yloc][xloc - 2] == '*':
             self.level_grid[yloc][xloc] = '!'
         elif self.level_grid[yloc][xloc] == '!' and self.level_grid[yloc][xloc - 2] == '*':
-            self.level_grid[yloc + 1][xloc] = '~'
-            self.level_grid[yloc - 1][xloc] = '~'
             self.level_grid[yloc][xloc + 1] = '~'
             self.level_grid[yloc][xloc - 1] = '~'
-            self.level_grid[yloc + 1][xloc + 1] = '~'
-            self.level_grid[yloc - 1][xloc + 1] = '~'
-            self.level_grid[yloc + 1][xloc - 1] = '~'
-            self.level_grid[yloc - 1][xloc - 1] = '~'
-        elif self.level_grid[yloc][xloc] == '!' and self.level_grid[yloc][xloc - 1] == '~':
-            self.level_grid[yloc + 2][xloc] = '`'
-            self.level_grid[yloc - 2][xloc] = '`'
+
+            if yloc + 1 < self.bottom and self.level_grid[yloc + 1][xloc] != '#':
+                self.level_grid[yloc + 1][xloc] = '~'
+                self.level_grid[yloc + 1][xloc + 1] = '~'
+                self.level_grid[yloc + 1][xloc - 1] = '~'
+
+            if yloc - 1 > self.top and self.level_grid[yloc - 1][xloc] != '#':
+                self.level_grid[yloc - 1][xloc] = '~'
+                self.level_grid[yloc - 1][xloc + 1] = '~'
+                self.level_grid[yloc - 1][xloc - 1] = '~'
+
+        if self.level_grid[yloc][xloc] == '!' and self.level_grid[yloc][xloc - 1] == '~' and self.level_grid[yloc][xloc - 2] != '`':
             self.level_grid[yloc][xloc + 2] = '`'
             self.level_grid[yloc][xloc - 2] = '`'
+
+            if yloc + 2 < self.bottom and self.level_grid[yloc + 2][xloc] != '#':
+             self.level_grid[yloc + 2][xloc] = '`'
+
+            if yloc - 2 > self.top and self.level_grid[yloc - 2][xloc] != '#':
+                self.level_grid[yloc - 2][xloc] = '`'
+
+        if self.level_grid[yloc][xloc] == '!' and self.level_grid[yloc][xloc - 1] == '~' and self.level_grid[yloc][xloc - 2] == '`':
+            self.level_grid[yloc][xloc] = ' '
+            self.level_grid[yloc][xloc + 2] = ' '
+            self.level_grid[yloc][xloc - 2] = ' '
+            self.level_grid[yloc][xloc + 1] = ' '
+            self.level_grid[yloc][xloc - 1] = ' '
+
+            if yloc + 1 < self.bottom and self.level_grid[yloc + 1][xloc] != '#':
+                self.level_grid[yloc + 1][xloc] = ' '
+                self.level_grid[yloc + 1][xloc + 1] = ' '
+                self.level_grid[yloc + 1][xloc - 1] = ' '
+
+            if yloc + 2 < self.bottom and self.level_grid[yloc + 2][xloc] != '#':
+                self.level_grid[yloc + 2][xloc] = ' '
+
+            if yloc - 1 > self.top and self.level_grid[yloc - 1][xloc] != '#':
+                self.level_grid[yloc - 1][xloc] = ' '
+                self.level_grid[yloc - 1][xloc + 1] = ' '
+                self.level_grid[yloc - 1][xloc - 1] = ' '
+
+            if yloc - 2 > self.top and self.level_grid[yloc - 2][xloc] != '#':
+                self.level_grid[yloc - 2][xloc] = ' '

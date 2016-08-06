@@ -20,6 +20,7 @@ from random import randint
 from enemies import EnemyGen
 from laser import laser
 
+
 class LevelGen:
     # Initialize game
     def __init__(self, level_grid, height, width, stdscr):
@@ -60,18 +61,6 @@ class LevelGen:
                 if i <= top or i >= bottom:
                     self.level_grid[i][self.width - 1] = '#'
 
-        # Enemies check for player to interact with
-        for i in range(self.height):
-            for j in range(self.width):
-                if self.level_grid[i][j] == '&' and j != 0:
-                    enemy.enemy_hunt(i, j)
-
-        # Checks for enemy that can no longer chase character and destroys them graphically if they can not
-        for i in range(self.height):
-            for j in range(self.width):
-                if j != 0:
-                    enemy.enemy_death(i, j)
-        
         # Shift all designated elements left
         for i in range(self.height):
             for j in range(self.width):
@@ -92,9 +81,26 @@ class LevelGen:
                     self.level_grid[i][j - 1] = temp
                 # Remove elements which have reached the left side of the screen
                 if 0 <= i <= self.height and self.level_grid[i][0] != ' ' and self.level_grid[i][0] != '@':
-                    self.level_grid[i][0] = ' '     
+                    self.level_grid[i][0] = ' '
 
-            # Creates obstacles at right side of the screen
+        # Enemies check for player to interact with
+        for i in range(self.height):
+            for j in range(self.width):
+                if self.level_grid[i][j] == '&' and j != 0:
+                    enemy.enemy_hunt(i, j)
+
+        # Checks for enemy that can no longer chase character and destroys them graphically if they can not
+        for i in range(self.height):
+            for j in range(self.width):
+                if j != 0:
+                    enemy.enemy_death(i, j)
+                    # Checks for enemy that can no longer chase character and destroys them graphically if they can not
+        for i in reversed(range(self.height)):
+            for j in reversed(range(self.width)):
+                if j != 0:
+                    self.wall_break(i, j)
+
+    # Creates obstacles at right side of the screen
     def level_obstacles(self, top, bottom):
         for i in range(self.height):
             if top < i < bottom:
@@ -104,6 +110,19 @@ class LevelGen:
                     if rand2 <= (bottom - i):
                         for k in range(rand2):
                             self.level_grid[i + k][self.width - 1] = '#'
+
+    def wall_break(self, yloc, xloc):
+        if self.level_grid[yloc][xloc] == '?':
+            self.level_grid[yloc][xloc + 1] = ','
+            self.level_grid[yloc][xloc - 1] = ','
+            self.level_grid[yloc][xloc] = ' '
+
+        elif self.level_grid[yloc][xloc] == ',' and self.level_grid[yloc + 1][xloc] != '#':
+            self.level_grid[yloc][xloc] = ' '
+            self.level_grid[yloc + 1][xloc] = ','
+
+        elif self.level_grid[yloc][xloc] == ',' and self.level_grid[yloc + 1][xloc] == '#':
+            self.level_grid[yloc][xloc] = ' '
 
     # Generate hero
     def place_hero(self):
@@ -137,7 +156,7 @@ class LevelGen:
                 if self.level_grid[i][j] == '-':
                     self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(6))                
                 elif count == self.width:
-                    if self.level_grid[i][j] == '#':
+                    if self.level_grid[i][j] == '#' or self.level_grid[i][j] == ',':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(1))
                     elif self.level_grid[i][j] == '&':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(2))
@@ -149,13 +168,13 @@ class LevelGen:
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(7) | curses.A_BOLD | curses.A_REVERSE)
                     elif self.level_grid[i][j] == '+':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(8) | curses.A_BOLD | curses.A_REVERSE)
-                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`':
+                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`' or self.level_grid[i][j] == '?' or self.level_grid[i][j] == '}':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(9))
                     else:
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n")
                     count = 0
                 elif count >= self.width - new_level:
-                    if self.level_grid[i][j] == '#':
+                    if self.level_grid[i][j] == '#' or self.level_grid[i][j] == ',':
                         self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(1))
                     elif self.level_grid[i][j] == '&':
                         self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(2))
@@ -167,13 +186,13 @@ class LevelGen:
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(7) | curses.A_BOLD | curses.A_REVERSE)
                     elif self.level_grid[i][j] == '+':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(8) | curses.A_BOLD | curses.A_REVERSE)
-                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`':
+                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`' or self.level_grid[i][j] == '?' or self.level_grid[i][j] == '}':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(9))
                     else:
                         self.stdscr.addstr(i, j, self.level_grid[i][j])
                 else:
 
-                    if self.level_grid[i][j] == '#':
+                    if self.level_grid[i][j] == '#' or self.level_grid[i][j] == ',':
                         self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(3))  
                     elif self.level_grid[i][j] == '&':
                         self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(4))
@@ -185,7 +204,7 @@ class LevelGen:
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(7) | curses.A_BOLD | curses.A_REVERSE)
                     elif self.level_grid[i][j] == '+':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(8) | curses.A_BOLD | curses.A_REVERSE)
-                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`':
+                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`' or self.level_grid[i][j] == '?' or self.level_grid[i][j] == '}':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(9))
                     else:
                         self.stdscr.addstr(i, j, self.level_grid[i][j])
@@ -209,18 +228,21 @@ class LevelGen:
                 row = i.getRow()
                 col = i.getCol()
                 thisChar = self.level_grid[row][col]
+                thatChar = self.level_grid[row - 1][col]
+                otherChar = self.level_grid[row + 1][col]
                 prevChar = self.level_grid[row][col - 1]
                 if thisChar == ' ':
                     self.level_grid[row][col] = '-'
-                elif thisChar == '&':
-                    self.level_grid[row][col] = ' '
+                elif thisChar == '&' or thatChar == '&' or otherChar == '&':
                     self.lasers.remove(i)
-                elif prevChar == '#' or thisChar == '#':
-                    self.level_grid[row][col] = ' '
+                    self.level_grid[row][col] = '}'
+
+                elif prevChar == '#' or thisChar == '#' or thatChar == '#' or otherChar == '#':
                     self.lasers.remove(i)
+                    self.level_grid[row][col] = '?'
+
             else:
                 self.lasers.remove(i)
-
 
     # Primary game loop, provides all necessary information for game to run and initiates all game actions
     def level_run(self, running):
@@ -242,8 +264,8 @@ class LevelGen:
         level_length = 100
         score_label = " Score: "
         laser_label = "Laser: "
-        laser_interval = 30 #number of steps before laser replinishes
-        laser_max = 5 #max number of lasers player can have
+        laser_interval = 30  # number of steps before laser replinishes
+        laser_max = 5  # max number of lasers player can have
         laser_count = 5
         self.place_hero()
         
@@ -268,13 +290,12 @@ class LevelGen:
                     self.move_hero_row(1)
                 else:  # handle collision
                     return score
-            elif c == ord(' '): # space bar used to shoot lasers
+            elif c == ord(' '):  # space bar used to shoot lasers
             
                 if laser_count > 0:
                     thisLaser = laser(self.heroRow, self.heroCol + 1, self.width-1)
                     self.lasers.append(thisLaser)
                     laser_count -= 1 
-                    
 
             player_height = self.heroRow
             player_depth = self.heroCol
@@ -306,23 +327,23 @@ class LevelGen:
                     new_level = 0
                 
                 self.level_update(top, bottom, player_height, player_depth)
-                score += 1 # update score whenever level updates
+                score += 1  # update score whenever level updates
     
                 if (score % laser_interval == 0) and laser_count < laser_max:
                     laser_count = laser_count + 1
 
                 # check for collisions after level update
-                #if self.level_grid[self.heroRow][self.heroCol] != '@':
+                # if self.level_grid[self.heroRow][self.heroCol] != '@':
                 #    return score
 
                 calc_start = False
 
-            # Refreash screen at designated intervals
+            # Refresh screen at designated intervals
             if refresh_start is False:
                 refresh_count = timer
                 refresh_start = True
-                #update laser positions on screen refresh
-                self.update_lasers() #looks better than updating on lvl update  
+                # update laser positions on screen refresh
+                self.update_lasers()  # looks better than updating on lvl update
                 self.level_draw(color, old_color, new_level)
                 # add score and laser count
                 self.stdscr.move(self.height, len(score_label))
@@ -337,9 +358,7 @@ class LevelGen:
                 for i in range(laser_max - laser_count): 
                     self.stdscr.addstr('  ')
 
-                    
-
-                #check for collisions after drawing level
+                # check for collisions after drawing level
                 if self.level_grid[self.heroRow][self.heroCol] != '@':
                     return score
             elif refresh_start and (timer - refresh_count) > 16:  # Interval to refresh game screen(milliseconds)
