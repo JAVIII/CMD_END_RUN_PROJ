@@ -71,11 +71,15 @@ class LevelGen:
                         temp = ' '
                         # fix to make sure char isn't shifted through laser
                         if j<self.width-1 and self.level_grid[i][j + 1] != ' ':
+                            laser_hit = False
 			    for k in self.lasers:
                                 if k.getRow() == i and k.getCol() == j:
                                     self.lasers.remove(k)
-                            
-                            self.level_grid[i][j + 1] = ' '
+                                    laser_hit = True
+                                    self.set_effect_char(self.level_grid[i][j + 1], i, j+ 1)
+
+                            if not laser_hit:
+                                self.level_grid[i][j + 1] = ' '
 
 	            self.level_grid[i][j] = ' '
                     self.level_grid[i][j - 1] = temp
@@ -209,11 +213,24 @@ class LevelGen:
                     else:
                         self.stdscr.addstr(i, j, self.level_grid[i][j])
 
-    # Controls "hero" movement
-    def move_hero_row(self, moveBy):
-        self.level_grid[self.heroRow][self.heroCol] = ' '
-        self.heroRow += moveBy
-        self.level_grid[self.heroRow][self.heroCol] = '@'
+  # Controls "hero" movement
+    def move_hero(self, moveBy, row, col):
+	if row:
+	    if self.heroRow + moveBy > self.height + 1:
+    		return
+	    if self.heroRow + moveBy < 0:
+		return
+       	    self.level_grid[self.heroRow][self.heroCol] = ' '
+       	    self.heroRow += moveBy
+       	    self.level_grid[self.heroRow][self.heroCol] = '@'
+        elif col:
+            if self.heroCol + moveBy > self.width + 1:
+                return
+            if self.heroCol + moveBy < 1:
+                return
+            self.level_grid[self.heroRow][self.heroCol] = ' '
+            self.heroCol += moveBy
+            self.level_grid[self.heroRow][self.heroCol] = '@'
 
     def update_lasers(self):
         # move all laser objects right
@@ -228,21 +245,21 @@ class LevelGen:
                 row = i.getRow()
                 col = i.getCol()
                 thisChar = self.level_grid[row][col]
-                thatChar = self.level_grid[row - 1][col]
-                otherChar = self.level_grid[row + 1][col]
-                prevChar = self.level_grid[row][col - 1]
+                
                 if thisChar == ' ':
                     self.level_grid[row][col] = '-'
-                elif thisChar == '&' or thatChar == '&' or otherChar == '&':
+                else:
                     self.lasers.remove(i)
-                    self.level_grid[row][col] = '}'
-
-                elif prevChar == '#' or thisChar == '#' or thatChar == '#' or otherChar == '#':
-                    self.lasers.remove(i)
-                    self.level_grid[row][col] = '?'
+                    self.set_effect_char(thisChar, row, col)
 
             else:
                 self.lasers.remove(i)
+
+    def set_effect_char(self, char, row, col):
+        if char == '&':
+            self.level_grid[row][col] = '}'
+        elif char == '#':
+            self.level_grid[row][col] = '?'
 
     # Primary game loop, provides all necessary information for game to run and initiates all game actions
     def level_run(self, running):
@@ -282,15 +299,26 @@ class LevelGen:
             c = self.stdscr.getch()
             if c == curses.KEY_UP:
                 if self.level_grid[self.heroRow - 1][self.heroCol] == ' ':
-                    self.move_hero_row(-1)
-                else:  # handle collision
-                    return score     
-            elif c == curses.KEY_DOWN:
-                if self.level_grid[self.heroRow + 1][self.heroCol] == ' ':
-                    self.move_hero_row(1)
+                    self.move_hero(-1, True, False)
                 else:  # handle collision
                     return score
-            elif c == ord(' '):  # space bar used to shoot lasers
+            elif c == curses.KEY_DOWN:
+                if self.level_grid[self.heroRow + 1][self.heroCol] == ' ':
+                    self.move_hero(1, True, False)
+                else:  # handle collision
+                    return score
+            elif c == curses.KEY_RIGHT:
+                if self.level_grid[self.heroRow][self.heroCol + 1] == ' ':
+                    if self.heroCol < self.width - 2:
+                        self.move_hero(1, False, True)
+                else:
+                    return score
+            elif c == curses.KEY_LEFT:
+                if self.level_grid[self.heroRow][self.heroCol - 1] == ' ':
+                    self.move_hero(-1, False, True)
+                else:
+                    return score
+            elif c == ord(' '): # space bar used to shoot lasers
             
                 if laser_count > 0:
                     thisLaser = laser(self.heroRow, self.heroCol + 1, self.width-1)
