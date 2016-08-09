@@ -62,31 +62,11 @@ class LevelGen:
     # update the game at designated intervals to move the level. Additionally calls for creation
     # of obstacles, and enemies and moves them as well
     def level_update(self, top, bottom, player_height, player_depth):
-        # Generate new obstacles
-        self.level_obstacles(top, bottom)
-
-        # Generate and place enemies
-        enemy = EnemyGen(self.currID, self.height, self.width, top, bottom, self.level_grid, player_height, player_depth, self.level_count)
-        enemy.enemy_spawn()
-        
-        #add enemy to enemies list
-        self.enemies.append(enemy)
-        self.currID += 1
 
         # Generate continuation of walls
         for i in range(self.height):
                 if i <= top or i >= bottom:
                     self.level_grid[i][self.width - 1] = '#'
-
-        # Enemies check for player to interact with
-        for e in self.enemies:
-            temp_x, temp_y = EnemyGen.enemy_hunt(e, player_height, player_depth)
-            if temp_x >= 0 and temp_x <= self.width and temp_y > 0 and temp_y< self.height:
-                if self.level_grid[temp_y][temp_x] == ' ':
-                    self.level_grid[e.height][e.width] = ' '
-                    e.height = temp_y
-                    e.width = temp_x
-            #if self.level_grid[self.heroCol][self.heroRow] == '&' and self.heroRow != 0:
                 
 #        for i in range(self.height):
 #            for j in range(self.width):

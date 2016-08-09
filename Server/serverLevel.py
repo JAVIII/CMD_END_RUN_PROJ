@@ -101,7 +101,6 @@ class LevelGen:
                 self.level_grid[e.height][e.width] = ' '
                 e.width -= 1
                 self.level_grid[e.height][e.width] = '&'
-                self.socket.buildPacket("mE", str(e.ID) + "," + str(e.width) + "," + str(e.height))
             
         #shift all walls left
         for o in self.obstacles[:]:
@@ -281,7 +280,7 @@ class LevelGen:
                             self.socket.buildPacket("end", score)
                             asyncore.loop(timeout = 1, count = 1)
                             return score
-                    
+                
                 
                 p = self.socket.getData()
 
@@ -330,3 +329,6 @@ class LevelGen:
             elif refresh_start and (timer - refresh_count) > 16:  # Interval to refresh game screen(milliseconds)
                 refresh_start = False
                 self.stdscr.refresh()
+                
+            for e in self.enemies:
+                self.socket.buildPacket("mE", str(e.ID) + "," + str(e.width) + "," + str(e.height))
