@@ -50,16 +50,6 @@ class LevelGen:
         for i in range(1, self.width):
             self.level_grid[0][i] = '#'
             self.level_grid[self.height - 1][i] = '#'
-#            for j in range(self.width):
- #               if j > 0:
- #                   if i <= 0 or i >= self.height - 1:
-#                        wall = Obstacle(self.currID, i, j)
-#                        #add wall to obstacles list
-#                        self.obstacles.append(wall)
-#                        self.socket.buildPacket("wall", str(self.currID) + "*" + str(i) + "*" + str(j))
-#                        self.currID += 1
-                        
-                        
 
     # update the game at designated intervals to move the level. Additionally calls for creation
     # of obstacles, and enemies and moves them as well
@@ -69,12 +59,11 @@ class LevelGen:
 
         # Generate and place enemies
         enemy = EnemyGen(self.currID, self.height, self.width, top, bottom, self.level_grid, player_height, player_depth, self.level_count)
-        enemy.enemy_spawn()
-        self.socket.buildPacket("cE", str(enemy.ID))
-        
-        #add enemy to enemies list
-        self.enemies.append(enemy)
-        self.currID += 1
+        if enemy.enemy_spawn():
+            self.socket.buildPacket("cE", str(enemy.ID) + "," + str(enemy.width) + "," + str(enemy.height))
+            #add enemy to enemies list
+            self.enemies.append(enemy)
+            self.currID += 1
 
         # Generate continuation of walls
         for i in range(self.height):
@@ -89,12 +78,6 @@ class LevelGen:
                     self.level_grid[e.height][e.width] = ' '
                     e.height = temp_y
                     e.width = temp_x
-            #if self.level_grid[self.heroCol][self.heroRow] == '&' and self.heroRow != 0:
-                
-#        for i in range(self.height):
-#            for j in range(self.width):
-#                if self.level_grid[i][j] == '&' and j != 0:
-#                    enemy.enemy_hunt(i, j)
 
         # Checks for enemy that can no longer chase character and destroys them graphically if they can not
         for e in self.enemies[:]:
@@ -102,8 +85,8 @@ class LevelGen:
                 if e.width < player_depth - 2:
                     EnemyGen.enemy_death(e, self, top, bottom)
                     #add deleted enemy to del_enemies list
+                    self.socket.buildPacket("delE", str(e.ID) + "," + str(e.width) + "," + str(e.height))
                     self.del_enemies.append(e)
-                    self.socket.buildPacket("delE", str(e.ID))
                     self.enemies.remove(e)
 
         #handle progression of explosion for deleted enemies and remove enemy when finished
@@ -111,13 +94,6 @@ class LevelGen:
             death = EnemyGen.enemy_death(e, self, top, bottom)
             if death == -1:
                     self.del_enemies.remove(e)
-                    
-#        for i in range(self.height):
-#            for j in range(self.width):
-#                if j != 0:
-#                    enemy.enemy_death(i, j)
-
-        # Shift all designated elements left
         
         #shift all enemies left
         for e in self.enemies:
@@ -125,34 +101,26 @@ class LevelGen:
                 self.level_grid[e.height][e.width] = ' '
                 e.width -= 1
                 self.level_grid[e.height][e.width] = '&'
-                self.socket.buildPacket("mE", str(e.ID) + "," + str(e.height) + "," + str(e.width))
+                self.socket.buildPacket("mE", str(e.ID) + "," + str(e.width) + "," + str(e.height))
             
         #shift all walls left
-        for o in self.obstacles:
+        for o in self.obstacles[:]:
             if o.width > 0 and o.width < self.width:
                 self.level_grid[o.height][o.width] = ' '
             o.width -= 1
             if o.width > 0 and o.width < self.width:
                 self.level_grid[o.height][o.width] = '#'
-            self.socket.buildPacket("mW", str(o.ID) + "," + str(o.height) + "," + str(o.width))
+                self.socket.buildPacket("mW", str(o.ID) + "," + str(o.width) + "," + str(o.height))
+            else:
+                self.socket.buildPacket("delW", str(o.ID))
+                self.obstacles.remove(o)
             
-        #shift top and bottom boundary walls if wall has 2 different sizes (i.e. the walls have moved in one)
+        #shift top and bottom boundary walls if wall has 2 different sizes (i.e. two levels on screen at once)
         for j in range(1, self.width - 1):
             if self.level_grid[top][j + 1] == '#':
                 self.level_grid[top][j ] = '#'
             if self.level_grid[bottom][j + 1] == '#':
                 self.level_grid[bottom][j] = '#'
-
-#        for i in range(self.height):
-#            for j in range(self.width):
-#                if self.level_grid[i][j] != ' ' and self.level_grid[i][j] != '@' and j != 0:
-#                    temp = self.level_grid[i][j]
-#                    self.level_grid[i][j] = ' '
-#                    self.level_grid[i][j - 1] = temp
-
-                # Remove elements which have reached the left side of the screen
- #               if 0 <= i <= self.height and self.level_grid[i][0] != ' ' and self.level_grid[i][0] != '@':
-#                    self.level_grid[i][0] = ' '
 
     # Creates obstacles at right side of the screen
     def level_obstacles(self, top, bottom):
@@ -166,7 +134,7 @@ class LevelGen:
                             wall = Obstacle(self.currID, i + k, self.width - 1)
                             #add wall to obstacles list
                             self.obstacles.append(wall)
-                            self.socket.buildPacket("cW", str(self.currID) + "," + str(wall.height) + "," + str(wall.width))
+                            self.socket.buildPacket("cW", str(self.currID) + "," + str(wall.width) + "," + str(wall.height))
                             self.currID += 1
 #                            self.level_grid[i + k][self.width - 1] = '#'
 
@@ -268,6 +236,7 @@ class LevelGen:
         old_color = color
         counter = 0
         score = 0
+        finalScore = 0
         top = 0
         bottom = self.height - 1
         refresh_start = False
@@ -307,26 +276,14 @@ class LevelGen:
                     if client == str(self.socket.clientA):
                         if self.level_grid[self.heroRow + val][self.heroCol] == ' ':
                             self.move_hero_row(val)
+                            self.socket.buildPacket("mPV", val)
                         else:
                             self.socket.buildPacket("end", score)
+                            asyncore.loop(timeout = 1, count = 1)
                             return score
+                    
                 
                 p = self.socket.getData()
-            
-
-            
-#            c = self.stdscr.getch()
-#            if c == curses.KEY_UP:
-#                if self.level_grid[self.heroRow - 1][self.heroCol] == ' ':
-#                    self.move_hero_row(-1)
-#                else:  # handle collision
-#                    return score
-                    
-#            elif c == curses.KEY_DOWN:
-#                if self.level_grid[self.heroRow + 1][self.heroCol] == ' ':
-#                    self.move_hero_row(1)
-#                else:  # handle collision
-#                    return score
 
             player_height = self.heroRow
             player_depth = self.heroCol
@@ -359,6 +316,8 @@ class LevelGen:
 
                 # check for collisions after level update
                 if self.level_grid[self.heroRow][self.heroCol] != '@':
+                    self.socket.buildPacket("end", score)
+                    asyncore.loop(timeout = 1, count = 1)
                     return score
 
                 calc_start = False

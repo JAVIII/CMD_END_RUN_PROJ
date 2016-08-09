@@ -94,14 +94,14 @@ class LevelGen:
 #                    enemy.enemy_hunt(i, j)
 
         # Checks for enemy that can no longer chase character and destroys them graphically if they can not
-        for e in self.enemies[:]:
-            if e.width >= 0 and e.width <= self.width and e.height > 0 and e.height < self.height:
-                if e.width < player_depth - 2:
-                    EnemyGen.enemy_death(e, self, top, bottom)
-                    #add deleted enemy to del_enemies list
-                    self.del_enemies.append(e)
+#        for e in self.enemies[:]:
+#            if e.width >= 0 and e.width <= self.width and e.height > 0 and e.height < self.height:
+#                if e.width < player_depth - 2:
+#                    EnemyGen.enemy_death(e, self, top, bottom)
+#                    #add deleted enemy to del_enemies list
+#                    self.del_enemies.append(e)
  #                   self.socket.buildPacket("delEn", str(e.ID))
-                    self.enemies.remove(e)
+ #                   self.enemies.remove(e)
 
         #handle progression of explosion for deleted enemies and remove enemy when finished
         for e in self.del_enemies[:]:
@@ -119,20 +119,14 @@ class LevelGen:
         #shift all enemies left
         for e in self.enemies:
             if e.width >= 0 and e.width <= self.width and e.height > 0 and e.height < self.height:
-                self.level_grid[e.height][e.width] = ' '
-                e.width -= 1
                 self.level_grid[e.height][e.width] = '&'
-#                self.socket.buildPacket("move", str(e.ID) + "*" + str(e.height) + "*" + str(e.width))
             
         #shift all walls left
         for o in self.obstacles:
             if o.width > 0 and o.width < self.width:
-                self.level_grid[o.height][o.width] = ' '
-            o.width -= 1
-            if o.width > 0 and o.width < self.width:
                 self.level_grid[o.height][o.width] = '#'
             
-        #shift top and bottom boundary walls if wall has 2 different sizes (i.e. the walls have moved in one)
+        #shift top and bottom boundary walls if wall has 2 different sizes (i.e. two levels on screen at once)
         for j in range(1, self.width - 1):
             if self.level_grid[top][j + 1] == '#':
                 self.level_grid[top][j ] = '#'
@@ -293,20 +287,67 @@ class LevelGen:
 			
             timer = int(round(time.clock() * 1000)) # Referenced to maintain updates and refresh rate
 
-            # temporary single player control code
-
-            
-            
             p = self.socket.getData()
             
             while p != "":
                 cmd, val = p.split('*')
                 if ',' in val:
-                    id, x, y = p.split(',')
+                    id, x, y = val.split(',')
+                    id = int(id)
+                    x = int(x)
+                    y = int(y)
                 else:
                     val = int(val)
-                
+                    
+                if cmd == "mPV":
+                    self.move_hero_row(val)
+                #move enemy
+                elif cmd == "mE":
+                    for e in self.enemies:
+                        if e.ID == id:
+                            if e.width >= 0 and e.width <= self.width and e.height > 0 and e.height < self.height:
+                                self.level_grid[e.height][e.width] = ' '
+                            e.height = y
+                            e.width = x
+                            self.level_grid[e.height][e.width] = '&'
+                #move wall
+                elif cmd == "mW":
+                    for o in self.obstacles:
+                        if o.ID == id:
+                            if o.width >= 0 and o.width <= self.width and o.height > 0 and o.height < self.height:
+                                self.level_grid[o.height][o.width] = ' '
+                            o.height = y
+                            o.width = x
+                            self.level_grid[o.height][o.width] = '#'
+                #create enemy
+                elif cmd == "cE":
+                    enemy = EnemyGen(id, y, x, top, bottom, self.level_grid, player_height, player_depth, self.level_count)
+                    self.enemies.append(enemy)
+                #create wall
+                elif cmd == "cW":
+                    wall = Obstacle(id, y, x)
+                    self.obstacles.append(wall)
+                #delete enemy
+                elif cmd == "delE":
+                    for e in self.enemies[:]:
+                        if e.ID == id:
+                            e.width = x
+                            e.height = y
+                            EnemyGen.enemy_death(e, self, top, bottom)
+                            self.del_enemies.append(e)
+                            self.enemies.remove(e)
+                #delete wall
+                elif cmd == "delW":
+                    for o in self.obstacles[:]:
+                        if o.ID == id:
+                            if o.width > 0 and o.width < self.width:
+                                self.level_grid[o.height][o.width] = ' '
+                                self.obstacles.remove(o)
+                elif cmd == "end":
+                    return val
+                                
                 p = self.socket.getData()
+                
                 
             #get user input
             vIn, hIn = self.getInput()
