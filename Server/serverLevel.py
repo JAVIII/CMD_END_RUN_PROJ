@@ -78,6 +78,11 @@ class LevelGen:
             if death == -1:
                     self.del_enemies.remove(e)
                     
+        #explode wall
+        for o in self.del_obstacles[:]:
+            if(o.wall_break(o.height, o.width) == 1):
+                self.del_obstacles.remove(o)
+                    
         # Enemies check for player to interact with
         for e in self.enemies[:]:
             temp_x, temp_y = EnemyGen.enemy_hunt(e, player_height, player_depth)
@@ -117,11 +122,6 @@ class LevelGen:
                     else:
                         self.level_grid[e.height][e.width] = '&'
                         self.socket.buildPacket("mE", str(e.ID) + "," + str(e.width) + "," + str(e.height))
-                        
-        #explode wall
-        for o in self.del_obstacles[:]:
-            if(o.wall_break(o.height, o.width) == 1):
-                self.del_obstacles.remove(o)
             
         #shift all walls left
         for o in self.obstacles[:]:
@@ -155,13 +155,12 @@ class LevelGen:
         
     def update_lasers(self):
         # move all laser objects right
-
         for i in self.lasers[:]:
             row = i.getRow()
             col = i.getCol()
         
             #after updating other objects, check for laser collision (other objects already exploding at this point)
-            if self.level_grid[row][col] != '-' and self.level_grid[row][col] != ' ':
+            if self.level_grid[row][col] == '?' or self.level_grid[row][col] == '}':
                 self.socket.buildPacket("delL", str(i.ID) + "," + str(col) + "," + str(row))
                 self.lasers.remove(i)
                 continue
@@ -352,6 +351,7 @@ class LevelGen:
         self.place_hero()
         moveH = 0
         moveV = 0
+        createLaser = False
 
         # place score label in bottom left hand corner
         self.stdscr.move(self.height, 0)
@@ -362,7 +362,6 @@ class LevelGen:
             asyncore.loop(timeout = 1, count = 1)
 
             timer = int(round(time.clock() * 1000)) # Referenced to maintain updates and refresh rate
-
             
             p = self.socket.getData()
             
@@ -371,35 +370,35 @@ class LevelGen:
                 val = int(val)
                 if cmd == "mH":
                     if  client == str(self.socket.clientB):
-                        if self.level_grid[self.heroRow][self.heroCol + val] == ' ':
-                            moveH += val
-                        else:
-                            self.socket.buildPacket("end", score)
-                            return score
+                        moveH += val
                 elif cmd == "mV":
                     if client == str(self.socket.clientA):
-                        if self.level_grid[self.heroRow + val][self.heroCol] == ' ':
-                            moveV += val
-                        else:
-                            self.socket.buildPacket("end", score)
-                            asyncore.loop(timeout = 1, count = 1)
-                            return score
+                        moveV += val
                 elif cmd == "fL":
-                    if  client == str(self.socket.clientB) and laser_count > 0:
-                        l = laser(self.currID, self.heroRow, self.heroCol + 1, self.width - 1)
-                        self.lasers.append(l)
-                        self.socket.buildPacket("cL", str(self.currID))
-                        laser_count -= 1
-                        self.currID += 1
+                    createLaser = True
                                   
                 p = self.socket.getData()
                 
             #move hero after all packets processed
-            self.move_hero(moveV, moveH)
-            self.socket.buildPacket("mP", "-1," + str(moveH) + "," + str(moveV))
-            moveV = 0
-            moveH = 0
-
+            if self.level_grid[self.heroRow + moveV][self.heroCol + moveH] != '&' and self.level_grid[self.heroRow + moveV][self.heroCol + moveH] != '#' :
+                self.move_hero(moveV, moveH)
+                self.socket.buildPacket("mP", "-1," + str(moveH) + "," + str(moveV))
+                moveV = 0
+                moveH = 0
+            else:
+                self.socket.buildPacket("end", score)
+                asyncore.loop(timeout = 1, count = 1)
+                return score
+                
+            #fire laser
+            if createLaser:
+                createLaser = False
+                if  client == str(self.socket.clientB) and laser_count > 0:
+                    l = laser(self.currID, self.heroRow, self.heroCol + 1, self.width - 1)
+                    self.lasers.append(l)
+                    self.socket.buildPacket("cL", str(self.currID))
+                    laser_count -= 1
+                    self.currID += 1
 
             player_height = self.heroRow
             player_depth = self.heroCol
