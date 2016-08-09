@@ -125,7 +125,7 @@ class menu():
             
             p = self.socket.getData()
             
-            if p == "" and (readyA or readyB):
+            if p == "" and readyA and readyB:
                 return seed
             
             while p != "":
@@ -138,8 +138,8 @@ class menu():
                         readyA = True
                     if  client == str(self.socket.clientB):
                         readyB = True
-                    #TEMP, WITH 2 CLIENTS NEED TO CHANGE OR TO AND
-                    if readyA or readyB:
+
+                    if readyA and readyB:
                         random.random()
                         seed = random.randint(0, sys.maxint)
                         self.socket.buildPacket("start", seed)
