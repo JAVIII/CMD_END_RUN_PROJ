@@ -42,6 +42,9 @@ class EnemyGen:
                     self.width -= 1
                     self.level_grid[i][self.width] = '&'
                     self.height = i
+                    return True
+
+        return False
 
     # The enemy becomes aware of the player when they enter "hunt" distance and then will
     # attempt to reach the player at random intervals

@@ -21,7 +21,7 @@ import random
 from random import randint
 from enemies import EnemyGen
 from obstacle import Obstacle
-
+from laser import laser
 
 class LevelGen:
     # Initialize game
@@ -39,6 +39,8 @@ class LevelGen:
         self.enemies = []
         self.obstacles = []
         self.del_enemies = []
+        self.del_obstacles = []
+        self.lasers = []
 
     # build initial screen for running game
     def level_build(self):
@@ -70,15 +72,27 @@ class LevelGen:
                 if i <= top or i >= bottom:
                     self.level_grid[i][self.width - 1] = '#'
 
+        #handle progression of explosion for deleted enemies and remove enemy when finished
+        for e in self.del_enemies[:]:
+            death = EnemyGen.enemy_death(e, self, top, bottom)
+            if death == -1:
+                    self.del_enemies.remove(e)
+                    
         # Enemies check for player to interact with
-        for e in self.enemies:
+        for e in self.enemies[:]:
             temp_x, temp_y = EnemyGen.enemy_hunt(e, player_height, player_depth)
-            if temp_x >= 0 and temp_x <= self.width and temp_y > 0 and temp_y< self.height:
+            if temp_x >= 0 and temp_x < self.width and temp_y >= 0 and temp_y< self.height:
                 if self.level_grid[temp_y][temp_x] == ' ':
                     self.level_grid[e.height][e.width] = ' '
                     e.height = temp_y
                     e.width = temp_x
-
+                #collision with laser
+                elif self.level_grid[temp_y][temp_x] == '-':
+                    self.set_effect_char('&', e.height, e.width)
+                    self.socket.buildPacket("delE", str(e.ID) + "," + str(e.width) + "," + str(e.height))
+                    self.del_enemies.append(e)
+                    self.enemies.remove(e)
+                    
         # Checks for enemy that can no longer chase character and destroys them graphically if they can not
         for e in self.enemies[:]:
             if e.width >= 0 and e.width <= self.width and e.height > 0 and e.height < self.height:
@@ -89,18 +103,25 @@ class LevelGen:
                     self.del_enemies.append(e)
                     self.enemies.remove(e)
 
-        #handle progression of explosion for deleted enemies and remove enemy when finished
-        for e in self.del_enemies[:]:
-            death = EnemyGen.enemy_death(e, self, top, bottom)
-            if death == -1:
-                    self.del_enemies.remove(e)
-        
         #shift all enemies left
         for e in self.enemies:
-            if e.width >= 0 and e.width <= self.width and e.height > 0 and e.height < self.height:
-                self.level_grid[e.height][e.width] = ' '
-                e.width -= 1
-                self.level_grid[e.height][e.width] = '&'
+            if e.width >= 0 and e.width < self.width and e.height >= 0 and e.height < self.height:
+                    self.level_grid[e.height][e.width] = ' '
+                    e.width -= 1
+                    #check for collision with laser
+                    if self.level_grid[e.height][e.width] == '-':
+                        self.set_effect_char('&', e.height, e.width)
+                        self.socket.buildPacket("eE", str(e.ID) + "," + str(e.width) + "," + str(e.height))
+                        self.del_enemies.append(e)
+                        self.enemies.remove(e)
+                    else:
+                        self.level_grid[e.height][e.width] = '&'
+                        self.socket.buildPacket("mE", str(e.ID) + "," + str(e.width) + "," + str(e.height))
+                        
+        #explode wall
+        for o in self.del_obstacles[:]:
+            if(o.wall_break(o.height, o.width) == 1):
+                self.del_obstacles.remove(o)
             
         #shift all walls left
         for o in self.obstacles[:]:
@@ -108,8 +129,16 @@ class LevelGen:
                 self.level_grid[o.height][o.width] = ' '
             o.width -= 1
             if o.width > 0 and o.width < self.width:
-                self.level_grid[o.height][o.width] = '#'
-                self.socket.buildPacket("mW", str(o.ID) + "," + str(o.width) + "," + str(o.height))
+                #collision with laser
+                if self.level_grid[o.height][o.width] == '-':
+                    #explode wall
+                    self.set_effect_char('#', o.height, o.width)
+                    self.socket.buildPacket("eW", str(o.ID) + "," + str(o.width) + "," + str(o.height))
+                    self.del_obstacles.append(o)
+                    self.obstacles.remove(o)
+                else:
+                    self.level_grid[o.height][o.width] = '#'
+                    self.socket.buildPacket("mW", str(o.ID) + "," + str(o.width) + "," + str(o.height))
             else:
                 self.socket.buildPacket("delW", str(o.ID))
                 self.obstacles.remove(o)
@@ -120,7 +149,67 @@ class LevelGen:
                 self.level_grid[top][j ] = '#'
             if self.level_grid[bottom][j + 1] == '#':
                 self.level_grid[bottom][j] = '#'
+        
+        #update laser position
+        self.update_lasers()
+        
+    def update_lasers(self):
+        # move all laser objects right
 
+        for i in self.lasers[:]:
+            row = i.getRow()
+            col = i.getCol()
+        
+            #after updating other objects, check for laser collision (other objects already exploding at this point)
+            if self.level_grid[row][col] != '-' and self.level_grid[row][col] != ' ':
+                self.socket.buildPacket("delL", str(i.ID) + "," + str(col) + "," + str(row))
+                self.lasers.remove(i)
+                continue
+            
+            #if no collision, move laser forward
+            self.level_grid[row][col] = ' '
+            on_map = i.advance()
+            if on_map:
+                row = i.getRow()
+                col = i.getCol()
+                thisChar = self.level_grid[row][col]
+                
+                if thisChar == ' ':
+                    self.socket.buildPacket("mL", str(i.ID) + "," + str(col) + "," + str(row))
+                    self.level_grid[row][col] = '-'
+                else:
+                    #collision with wall
+                    if self.level_grid[row][col] == '#':
+                        for o in self.obstacles[:]:
+                            if o.height == row and o.width == col:
+                                self.set_effect_char('#', o.height, o.width)
+                                self.socket.buildPacket("eW", str(o.ID) + "," + str(o.width) + "," + str(o.height))
+                                self.del_obstacles.append(o)
+                                self.obstacles.remove(o)
+                                self.socket.buildPacket("delL", str(i.ID) + "," + str(col) + "," + str(row))
+                                self.lasers.remove(i)
+                                break
+                    #collision with enemy
+                    elif self.level_grid[row][col] == '&':
+                        for e in self.enemies[:]:
+                            if e.height == row and e.width == col:
+                                self.set_effect_char('&', e.height, e.width)
+                                self.socket.buildPacket("eE", str(e.ID) + "," + str(e.width) + "," + str(e.height))
+                                self.del_enemies.append(e)
+                                self.enemies.remove(e)
+                                self.socket.buildPacket("delL", str(i.ID) + "," + str(col) + "," + str(row))
+                                self.lasers.remove(i)
+                                self.set_effect_char(thisChar, row, col)
+            else:
+                self.socket.buildPacket("delL", str(i.ID) + "," + str(col) + "," + str(row))
+                self.lasers.remove(i)
+                
+    def set_effect_char(self, char, row, col):
+        if char == '&':
+            self.level_grid[row][col] = '}'
+        elif char == '#':
+            self.level_grid[row][col] = '?'
+                
     # Creates obstacles at right side of the screen
     def level_obstacles(self, top, bottom):
         for i in range(self.height):
@@ -130,7 +219,7 @@ class LevelGen:
                     rand2 = randint(0, 4)
                     if rand2 <= (bottom - i):
                         for k in range(rand2):
-                            wall = Obstacle(self.currID, i + k, self.width - 1)
+                            wall = Obstacle(self.currID, i + k, self.width - 1, self)
                             #add wall to obstacles list
                             self.obstacles.append(wall)
                             self.socket.buildPacket("cW", str(self.currID) + "," + str(wall.width) + "," + str(wall.height))
@@ -158,16 +247,18 @@ class LevelGen:
         curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)
         curses.init_pair(8, curses.COLOR_WHITE, curses.COLOR_BLACK)
         curses.init_pair(9, curses.COLOR_BLACK, curses.COLOR_BLACK)
-
+        curses.init_pair(10, curses.COLOR_RED, curses.COLOR_RED)
         count = 0
 
         # Draws game to screen with appropriate color palettes
         for i in range(self.height):
             for j in range(self.width):
                 count += 1
-
-                if count == self.width:
-                    if self.level_grid[i][j] == '#':
+                
+                if self.level_grid[i][j] == '-':
+                    self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(6))                
+                elif count == self.width:
+                    if self.level_grid[i][j] == '#' or self.level_grid[i][j] == ',':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(1))
                     elif self.level_grid[i][j] == '&':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(2))
@@ -179,13 +270,13 @@ class LevelGen:
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(7) | curses.A_BOLD | curses.A_REVERSE)
                     elif self.level_grid[i][j] == '+':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(8) | curses.A_BOLD | curses.A_REVERSE)
-                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`':
+                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`' or self.level_grid[i][j] == '?' or self.level_grid[i][j] == '}':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(9))
                     else:
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n")
                     count = 0
                 elif count >= self.width - new_level:
-                    if self.level_grid[i][j] == '#':
+                    if self.level_grid[i][j] == '#' or self.level_grid[i][j] == ',':
                         self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(1))
                     elif self.level_grid[i][j] == '&':
                         self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(2))
@@ -197,13 +288,13 @@ class LevelGen:
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(7) | curses.A_BOLD | curses.A_REVERSE)
                     elif self.level_grid[i][j] == '+':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(8) | curses.A_BOLD | curses.A_REVERSE)
-                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`':
+                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`' or self.level_grid[i][j] == '?' or self.level_grid[i][j] == '}':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(9))
                     else:
                         self.stdscr.addstr(i, j, self.level_grid[i][j])
                 else:
-                    if self.level_grid[i][j] == '#':
-                        self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(3))
+                    if self.level_grid[i][j] == '#' or self.level_grid[i][j] == ',':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(3))  
                     elif self.level_grid[i][j] == '&':
                         self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(4))
                     elif self.level_grid[i][j] == '%':
@@ -214,17 +305,26 @@ class LevelGen:
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(7) | curses.A_BOLD | curses.A_REVERSE)
                     elif self.level_grid[i][j] == '+':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(8) | curses.A_BOLD | curses.A_REVERSE)
-                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`':
+                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`' or self.level_grid[i][j] == '?' or self.level_grid[i][j] == '}':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(9))
                     else:
                         self.stdscr.addstr(i, j, self.level_grid[i][j])
 
     # Controls "hero" movement
-    def move_hero_row(self, moveBy):
+    def move_hero(self, moveV, moveH):
+        newV = self.heroRow
+        newH = self.heroCol
+        if not self.heroRow + moveV >= self.height or self.heroRow + moveV < 0:
+            newV += moveV
+        
+        if not self.heroCol + moveH >= self.width or self.heroCol + moveH < 0:
+            newH += moveH
+            
         self.level_grid[self.heroRow][self.heroCol] = ' '
-        self.heroRow += moveBy
+        self.heroRow = newV
+        self.heroCol = newH
         self.level_grid[self.heroRow][self.heroCol] = '@'
-
+        
     # Primary game loop, provides all necessary information for game to run and initiates all game actions
     def level_run(self, running):
 
@@ -245,7 +345,13 @@ class LevelGen:
         new_level = 0
         level_length = 100
         score_label = "Score: "
+        laser_label = "Laser: "
+        laser_interval = 30  # number of steps before laser replinishes
+        laser_max = 5  # max number of lasers player can have
+        laser_count = 5
         self.place_hero()
+        moveH = 0
+        moveV = 0
 
         # place score label in bottom left hand corner
         self.stdscr.move(self.height, 0)
@@ -266,23 +372,34 @@ class LevelGen:
                 if cmd == "mH":
                     if  client == str(self.socket.clientB):
                         if self.level_grid[self.heroRow][self.heroCol + val] == ' ':
-                            continue
-#                            self.move_hero_row(val)
+                            moveH += val
                         else:
                             self.socket.buildPacket("end", score)
                             return score
-                if cmd == "mV":
+                elif cmd == "mV":
                     if client == str(self.socket.clientA):
                         if self.level_grid[self.heroRow + val][self.heroCol] == ' ':
-                            self.move_hero_row(val)
-                            self.socket.buildPacket("mPV", val)
+                            moveV += val
                         else:
                             self.socket.buildPacket("end", score)
                             asyncore.loop(timeout = 1, count = 1)
                             return score
-                
-                
+                elif cmd == "fL":
+                    if  client == str(self.socket.clientB) and laser_count > 0:
+                        l = laser(self.currID, self.heroRow, self.heroCol + 1, self.width - 1)
+                        self.lasers.append(l)
+                        self.socket.buildPacket("cL", str(self.currID))
+                        laser_count -= 1
+                        self.currID += 1
+                                  
                 p = self.socket.getData()
+                
+            #move hero after all packets processed
+            self.move_hero(moveV, moveH)
+            self.socket.buildPacket("mP", "-1," + str(moveH) + "," + str(moveV))
+            moveV = 0
+            moveH = 0
+
 
             player_height = self.heroRow
             player_depth = self.heroCol
@@ -310,14 +427,9 @@ class LevelGen:
 
                 self.level_update(top, bottom, player_height, player_depth)
                 score += 1 # update score whenever level updates
-                self.stdscr.move(self.height, len(score_label))
-                self.stdscr.addstr(str(score))
-
-                # check for collisions after level update
-                if self.level_grid[self.heroRow][self.heroCol] != '@':
-                    self.socket.buildPacket("end", score)
-                    asyncore.loop(timeout = 1, count = 1)
-                    return score
+                
+                if (score % laser_interval == 0) and laser_count < laser_max:
+                    laser_count = laser_count + 1
 
                 calc_start = False
 
@@ -325,10 +437,26 @@ class LevelGen:
             if refresh_start is False:
                 refresh_count = timer
                 refresh_start = True
+                
                 self.level_draw(color, old_color, new_level)
+                self.stdscr.move(self.height, len(score_label))
+                self.stdscr.addstr(str(score))
+                self.stdscr.move(self.height, self.width-(len(score_label)+10))
+                self.stdscr.addstr(laser_label)
+                # add a red bar for each laser
+                for i in range(laser_count):
+                    self.stdscr.addstr('|', curses.color_pair(10))
+                    self.stdscr.addstr(' ')
+                # make sure rest of laser bar is blacked out
+                for i in range(laser_max - laser_count): 
+                    self.stdscr.addstr('  ')
+                    
+                # check for collisions after drawing level
+                if self.level_grid[self.heroRow][self.heroCol] != '@':
+                    self.socket.buildPacket("end", score)
+                    asyncore.loop(timeout = 1, count = 1)
+                    return score
+
             elif refresh_start and (timer - refresh_count) > 16:  # Interval to refresh game screen(milliseconds)
                 refresh_start = False
                 self.stdscr.refresh()
-                
-            for e in self.enemies:
-                self.socket.buildPacket("mE", str(e.ID) + "," + str(e.width) + "," + str(e.height))

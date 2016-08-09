@@ -21,6 +21,7 @@ import random
 from random import randint
 from enemies import EnemyGen
 from obstacle import Obstacle
+from laser import laser
 
 
 class LevelGen:
@@ -39,6 +40,8 @@ class LevelGen:
         self.enemies = []
         self.obstacles = []
         self.del_enemies = []
+        self.del_obstacles = []
+        self.lasers = []
 
     # build initial screen for running game
     def level_build(self):
@@ -50,14 +53,6 @@ class LevelGen:
         for i in range(1, self.width):
             self.level_grid[0][i] = '#'
             self.level_grid[self.height - 1][i] = '#'
-#            for j in range(self.width):
- #               if j > 0:
- #                   if i <= 0 or i >= self.height - 1:
-#                        wall = Obstacle(self.currID, i, j)
-#                        #add wall to obstacles list
-#                        self.obstacles.append(wall)
-#                        self.socket.buildPacket("wall", str(self.currID) + "*" + str(i) + "*" + str(j))
-#                        self.currID += 1
 
     # update the game at designated intervals to move the level. Additionally calls for creation
     # of obstacles, and enemies and moves them as well
@@ -67,21 +62,6 @@ class LevelGen:
         for i in range(self.height):
                 if i <= top or i >= bottom:
                     self.level_grid[i][self.width - 1] = '#'
-                
-#        for i in range(self.height):
-#            for j in range(self.width):
-#                if self.level_grid[i][j] == '&' and j != 0:
-#                    enemy.enemy_hunt(i, j)
-
-        # Checks for enemy that can no longer chase character and destroys them graphically if they can not
-#        for e in self.enemies[:]:
-#            if e.width >= 0 and e.width <= self.width and e.height > 0 and e.height < self.height:
-#                if e.width < player_depth - 2:
-#                    EnemyGen.enemy_death(e, self, top, bottom)
-#                    #add deleted enemy to del_enemies list
-#                    self.del_enemies.append(e)
- #                   self.socket.buildPacket("delEn", str(e.ID))
- #                   self.enemies.remove(e)
 
         #handle progression of explosion for deleted enemies and remove enemy when finished
         for e in self.del_enemies[:]:
@@ -89,10 +69,8 @@ class LevelGen:
             if death == -1:
                     self.del_enemies.remove(e)
                     
-#        for i in range(self.height):
-#            for j in range(self.width):
-#                if j != 0:
-#                    enemy.enemy_death(i, j)
+        for o in self.del_obstacles[:]:
+            o.wall_break(o.height, o.width)
 
         # Shift all designated elements left
         
@@ -113,16 +91,12 @@ class LevelGen:
             if self.level_grid[bottom][j + 1] == '#':
                 self.level_grid[bottom][j] = '#'
 
+        # Remove elements which have reached the left side of the screen
 #        for i in range(self.height):
-#            for j in range(self.width):
-#                if self.level_grid[i][j] != ' ' and self.level_grid[i][j] != '@' and j != 0:
-#                    temp = self.level_grid[i][j]
-#                    self.level_grid[i][j] = ' '
-#                    self.level_grid[i][j - 1] = temp
-
-                # Remove elements which have reached the left side of the screen
-                if 0 <= i <= self.height and self.level_grid[i][0] != ' ' and self.level_grid[i][0] != '@':
-                    self.level_grid[i][0] = ' '
+#            self.level_grid[i][0] = ' '
+#            self.level_grid[i][self.height - 1] = ' '
+#        if 0 <= i <= self.height and self.level_grid[i][0] != ' ' and self.level_grid[i][0] != '@':
+#            self.level_grid[i][0] = ' '
 
     # Creates obstacles at right side of the screen
     def level_obstacles(self, top, bottom):
@@ -161,16 +135,18 @@ class LevelGen:
         curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)
         curses.init_pair(8, curses.COLOR_WHITE, curses.COLOR_BLACK)
         curses.init_pair(9, curses.COLOR_BLACK, curses.COLOR_BLACK)
-
+        curses.init_pair(10, curses.COLOR_RED, curses.COLOR_RED)
         count = 0
 
         # Draws game to screen with appropriate color palettes
         for i in range(self.height):
             for j in range(self.width):
                 count += 1
-
-                if count == self.width:
-                    if self.level_grid[i][j] == '#':
+                
+                if self.level_grid[i][j] == '-':
+                    self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(6))                
+                elif count == self.width:
+                    if self.level_grid[i][j] == '#' or self.level_grid[i][j] == ',':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(1))
                     elif self.level_grid[i][j] == '&':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(2))
@@ -182,13 +158,13 @@ class LevelGen:
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(7) | curses.A_BOLD | curses.A_REVERSE)
                     elif self.level_grid[i][j] == '+':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(8) | curses.A_BOLD | curses.A_REVERSE)
-                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`':
+                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`' or self.level_grid[i][j] == '?' or self.level_grid[i][j] == '}':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(9))
                     else:
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n")
                     count = 0
                 elif count >= self.width - new_level:
-                    if self.level_grid[i][j] == '#':
+                    if self.level_grid[i][j] == '#' or self.level_grid[i][j] == ',':
                         self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(1))
                     elif self.level_grid[i][j] == '&':
                         self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(2))
@@ -200,13 +176,14 @@ class LevelGen:
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(7) | curses.A_BOLD | curses.A_REVERSE)
                     elif self.level_grid[i][j] == '+':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(8) | curses.A_BOLD | curses.A_REVERSE)
-                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`':
+                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`' or self.level_grid[i][j] == '?' or self.level_grid[i][j] == '}':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(9))
                     else:
                         self.stdscr.addstr(i, j, self.level_grid[i][j])
                 else:
-                    if self.level_grid[i][j] == '#':
-                        self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(3))
+
+                    if self.level_grid[i][j] == '#' or self.level_grid[i][j] == ',':
+                        self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(3))  
                     elif self.level_grid[i][j] == '&':
                         self.stdscr.addstr(i, j, self.level_grid[i][j], curses.color_pair(4))
                     elif self.level_grid[i][j] == '%':
@@ -217,22 +194,28 @@ class LevelGen:
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(7) | curses.A_BOLD | curses.A_REVERSE)
                     elif self.level_grid[i][j] == '+':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(8) | curses.A_BOLD | curses.A_REVERSE)
-                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`':
+                    elif self.level_grid[i][j] == '!' or self.level_grid[i][j] == '~' or self.level_grid[i][j] == '`' or self.level_grid[i][j] == '?' or self.level_grid[i][j] == '}':
                         self.stdscr.addstr(i, j, self.level_grid[i][j] + "\n", curses.color_pair(9))
                     else:
                         self.stdscr.addstr(i, j, self.level_grid[i][j])
 
     # Controls "hero" movement
-    def move_hero_row(self, moveBy):
+    def move_hero(self, moveV, moveH):
         self.level_grid[self.heroRow][self.heroCol] = ' '
-        self.heroRow += moveBy
-        self.level_grid[self.heroRow][self.heroCol] = '@'
-
+        self.heroRow += moveV
+        self.heroCol += moveH
+        self.level_grid[self.heroRow][self.heroCol] = '@'     
+        
     def getInput(self):
         c = self.stdscr.getch()
         #no key pressed
         if c == -1:
             return 0, 0
+            
+        #spacebar
+        if c == ord(' '):
+            return 2, 2
+            
         # -1 for up key, 1 for down key, or 0 for no valid keys
         return int(c == curses.KEY_DOWN) - int(c == curses.KEY_UP), int(c == curses.KEY_RIGHT) - int(c == curses.KEY_LEFT)
 		
@@ -255,6 +238,10 @@ class LevelGen:
         new_level = 0
         level_length = 100
         score_label = "Score: "
+        laser_label = "Laser: "
+        laser_interval = 30  # number of steps before laser replinishes
+        laser_max = 5  # max number of lasers player can have
+        laser_count = 5
         self.place_hero()
 
         # place score label in bottom left hand corner
@@ -279,34 +266,50 @@ class LevelGen:
                 else:
                     val = int(val)
                     
-                if cmd == "mPV":
-                    self.move_hero_row(val)
+                if cmd == "mP":
+                    self.move_hero(y, x)
                 #move enemy
                 elif cmd == "mE":
                     for e in self.enemies:
                         if e.ID == id:
-                            if e.width >= 0 and e.width <= self.width and e.height > 0 and e.height < self.height:
+                            if e.width >= 0 and e.width < self.width:
                                 self.level_grid[e.height][e.width] = ' '
                             e.height = y
                             e.width = x
                             self.level_grid[e.height][e.width] = '&'
+                            break
                 #move wall
                 elif cmd == "mW":
                     for o in self.obstacles:
                         if o.ID == id:
-                            if o.width >= 0 and o.width <= self.width and o.height > 0 and o.height < self.height:
+                            if o.width >= 0 and o.width < self.width:
                                 self.level_grid[o.height][o.width] = ' '
                             o.height = y
                             o.width = x
                             self.level_grid[o.height][o.width] = '#'
+                            break
+                #move laser
+                elif cmd == "mL":
+                    for l in self.lasers:
+                        if l.ID == id:
+                            if l.col >= 0 and l.col < self.width:
+                                self.level_grid[l.row][l.col] = ' '
+                            l.row = y
+                            l.col = x
+                            self.level_grid[l.row][l.col] = '-'
                 #create enemy
                 elif cmd == "cE":
                     enemy = EnemyGen(id, y, x, top, bottom, self.level_grid, player_height, player_depth, self.level_count)
                     self.enemies.append(enemy)
                 #create wall
                 elif cmd == "cW":
-                    wall = Obstacle(id, y, x)
+                    wall = Obstacle(id, y, x, self)
                     self.obstacles.append(wall)
+                #create laser
+                elif cmd == "cL":
+                    l = laser(val, self.heroRow, self.heroCol + 1, self.width - 1)
+                    self.lasers.append(l)
+                    laser_count -= 1
                 #delete enemy
                 elif cmd == "delE":
                     for e in self.enemies[:]:
@@ -316,13 +319,46 @@ class LevelGen:
                             EnemyGen.enemy_death(e, self, top, bottom)
                             self.del_enemies.append(e)
                             self.enemies.remove(e)
+                            break
+                #delete laser
+                if cmd == "delL":
+                    for l in self.lasers[:]:
+                        if l.ID == id:
+                            if l.col >= 0 and l.col < self.width:
+                                self.level_grid[l.row][l.col] = ' '
+                            self.lasers.remove(l)
+                            break
                 #delete wall
                 elif cmd == "delW":
                     for o in self.obstacles[:]:
                         if o.ID == id:
-                            if o.width > 0 and o.width < self.width:
+                            if o.width >= 0 and o.width < self.width:
                                 self.level_grid[o.height][o.width] = ' '
-                                self.obstacles.remove(o)
+                            self.obstacles.remove(o)
+                            break
+                #laser enemy
+                elif cmd == "eE":
+                    for e in self.enemies[:]:
+                        if e.ID == id:
+                            if e.width >= 0 and e.width < self.width:
+                                self.level_grid[e.height][e.width] = ' '
+                            e.height = y
+                            e.width = x
+                            self.level_grid[e.height][e.width] = '}'
+                            self.del_enemies.append(e)
+                            self.enemies.remove(e)
+                            break
+                #explode wall
+                elif cmd == "eW":
+                    for o in self.obstacles[:]:
+                        if o.ID == id:
+                            if o.width >= 0 and o.width < self.width:
+                                self.level_grid[o.height][o.width] = ' '
+                            o.height = y
+                            o.width = x
+                            self.del_obstacles.append(o)
+                            self.obstacles.remove(o)
+                            break
                 elif cmd == "end":
                     return val
                                 
@@ -331,11 +367,17 @@ class LevelGen:
                 
             #get user input
             vIn, hIn = self.getInput()
-				
-            if vIn != 0:
-                self.socket.buildPacket("mV", vIn)
-            if hIn != 0:
-                self.socket.buildPacket("mH", hIn)
+            
+            #fire laser
+            if vIn == 2:
+                self.socket.buildPacket("fL", vIn)
+            else:
+                #vertical movement
+                if vIn != 0:
+                    self.socket.buildPacket("mV", vIn)
+                #horizontal movement
+                if hIn != 0:
+                    self.socket.buildPacket("mH", hIn)
                 
             player_height = self.heroRow
             player_depth = self.heroCol
@@ -363,8 +405,9 @@ class LevelGen:
 
                 self.level_update(top, bottom, player_height, player_depth)
                 score += 1 # update score whenever level updates
-                self.stdscr.move(self.height, len(score_label))
-                self.stdscr.addstr(str(score))
+                
+                if (score % laser_interval == 0) and laser_count < laser_max:
+                    laser_count += 1
 
                 calc_start = False
 
@@ -373,6 +416,18 @@ class LevelGen:
                 refresh_count = timer
                 refresh_start = True
                 self.level_draw(color, old_color, new_level)
+                # add score and laser count
+                self.stdscr.move(self.height, len(score_label))
+                self.stdscr.addstr(str(score))
+                self.stdscr.move(self.height, self.width-(len(score_label)+10))
+                self.stdscr.addstr(laser_label)
+                # add a red bar for each laser
+                for i in range(laser_count):
+                    self.stdscr.addstr('|', curses.color_pair(10))
+                    self.stdscr.addstr(' ')
+                # make sure rest of laser bar is blacked out
+                for i in range(laser_max - laser_count): 
+                    self.stdscr.addstr('  ')
             elif refresh_start and (timer - refresh_count) > 16:  # Interval to refresh game screen(milliseconds)
                 refresh_start = False
                 self.stdscr.refresh()
