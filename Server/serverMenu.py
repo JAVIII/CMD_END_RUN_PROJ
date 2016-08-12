@@ -44,8 +44,8 @@ class menu():
                 break
             fileChars.append(c)        
 
-	thisFile.close()
-        return fileChars 
+        thisFile.close()
+        return fileChars
    
     ''' renders menu based on characters stored in menuChars.
         expects characters read from a menu text file in a certain format:
@@ -103,7 +103,7 @@ class menu():
             
     def menuLaunch(self):
         if len(self.menuChars) == 0:
-	    self.menuChars = self.readFile(self.menuFile)
+        self.menuChars = self.readFile(self.menuFile)
 
         curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
         curses.init_pair(2, curses.COLOR_CYAN, curses.COLOR_BLACK)
@@ -201,10 +201,10 @@ class menu():
         gameStartString = "Starting game in... "
         row = 12
         col = 27
-    
+
         if len(self.waitingChars) == 0:
             self.waitingChars = self.readFile(self.waitingFile)
-        
+
         self.renderScreen(self.waitingChars)
 
         # integrate with netcode to detect player connections if possible
@@ -212,7 +212,7 @@ class menu():
             readyPlayer1 = True
             readyPlayer2 = True
 
-        # set countdown to game start 
+        # set countdown to game start
         self.stdscr.move(row, col)
         self.stdscr.addstr(gameStartString)
         col += len(gameStartString)
