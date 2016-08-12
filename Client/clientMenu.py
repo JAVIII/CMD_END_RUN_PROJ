@@ -120,59 +120,45 @@ class menu():
             uInput = self.getInput()
             
             #enter key
-            if uInput == -2:
-                self.socket.buildPacket("sel", selectedOption)
+            if uInput == -2 or uInput == 2:
+                if selectedOption == 1:
+                    self.socket.buildPacket("sel", selectedOption)
+                else:
+                    return selectedOption
+            elif uInput > 2:
+                return selectedOption
+            elif selectedOption + uInput >= 1 and selectedOption + uInput <= options:
+                self.stdscr.addch(row, col, ' ')
+                row += uInput
+                selectedOption += uInput
+                self.stdscr.addch(row, col, '@', curses.color_pair(3))
+                self.stdscr.refresh()
+                
             #other keys
-            elif uInput != 0:
-                self.socket.buildPacket("cmd", uInput)
+#            elif uInput != 0:
+#                self.socket.buildPacket("cmd", uInput)
                 
             p = self.socket.getData()
             while p != "":
                 cmd, val = p.split('*')
 
+                if cmd == "start":
+                    return int(val)
                 #move character from one point to another
-                if cmd == "mov":
-                    newRow, selected = val.split(',')
-                    newRow = int(newRow)
-                    selected = int(selected)
-                    self.stdscr.addch(row, col, ' ')
-                    row = newRow
-                    selectedOption = selected
-                    self.stdscr.addch(row, col, '@', curses.color_pair(3))
-                    self.stdscr.refresh()
+#                if cmd == "mov":
+#                    newRow, selected = val.split(',')
+#                    newRow = int(newRow)
+#                    selected = int(selected)
+#                    self.stdscr.addch(row, col, ' ')
+#                    row = newRow
+#                    selectedOption = selected
+#                    self.stdscr.addch(row, col, '@', curses.color_pair(3))
+#                    self.stdscr.refresh()
                     
                 p = self.socket.getData()
                 
                 #return seed
-                if cmd == "start":
-                    return int(val)
                 
-        
-#           c = self.stdscr.getch()
-#            if c == -1:
-#                continue
-
-#            if c >= ord('1') and c <= (ord('0') + options): #number input
-#                self.clearRefresh()
-#                return int(chr(c)) 
-#            if c == curses.KEY_UP:
-#                if selectedOption > 1:
-#                    self.stdscr.addch(row, col, ' ')
-#                    row -= 1
-#                    selectedOption -= 1
-#                    self.stdscr.addch(row, col, '@', curses.color_pair(3))
-#                    self.stdscr.refresh()
-#            if c == curses.KEY_DOWN:
-#                if selectedOption < options:
-#                    self.stdscr.addch(row, col, ' ')
-#                    row += 1
-#                    selectedOption += 1
-#                    self.stdscr.addch(row, col, '@', curses.color_pair(3))
-#                    self.stdscr.refresh() 
-#            if c == curses.KEY_ENTER or c == 10:
-#            	if selectedOption >= 1 and selectedOption <= options:
-#                    self.clearRefresh()
-#                    return selectedOption
 
     #gets user input. Returns 0 if no input, -2 for enter key. Return -1 to 1 for up/down input, 
     # and numerical value of key + 1 for number key input (e.g. '2' key would return 3)

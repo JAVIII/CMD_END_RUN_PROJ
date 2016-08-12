@@ -75,7 +75,7 @@ while True:  # return to menu until user chooses to quit
             scoreTracker.setScore(currentHighScore) # set current high score    
             scoreTracker.writeScore() # write current high score 	
 
-        gameMenu.gameOverLaunch(score, newHighScore)
+#        gameMenu.gameOverLaunch(score, newHighScore)
 
     stdscr.clear()
 

@@ -138,26 +138,17 @@ class menu():
                         readyA = True
                     if  client == str(self.socket.clientB):
                         readyB = True
-
                     if readyA and readyB:
                         random.random()
                         seed = random.randint(0, sys.maxint)
                         self.socket.buildPacket("start", seed)
-                elif cmd == "cmd":
-                    #up or down
-                    if val == 1 or val == -1:
-                        if selectedOption + val >= 1 and selectedOption + val <= options:
-                            self.stdscr.addch(row, col, ' ')
-                            row += val
-                            selectedOption += val
-                            self.socket.buildPacket("mov", str(row) + ',' + str(selectedOption))
-                    #number key (start game, number keys are incremented so 2 = 1, 3 = 2, etc)
-                    elif val == 2:
+
+                    if val == 2:
                         if client == str(self.socket.clientA):
-                            readyA =  not readyA
+                            readyA =  True
                         elif  client == str(self.socket.clientB):
-                            readyB = not readyB
-                            
+                            readyB = True
+#                            
                         if readyA and readyB:
                             random.random()
                             seed = random.randint(0, sys.maxint)

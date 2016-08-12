@@ -380,15 +380,16 @@ class LevelGen:
                 p = self.socket.getData()
                 
             #move hero after all packets processed
-            if self.level_grid[self.heroRow + moveV][self.heroCol + moveH] != '&' and self.level_grid[self.heroRow + moveV][self.heroCol + moveH] != '#' :
-                self.move_hero(moveV, moveH)
-                self.socket.buildPacket("mP", "-1," + str(moveH) + "," + str(moveV))
-                moveV = 0
-                moveH = 0
-            else:
-                self.socket.buildPacket("end", score)
-                asyncore.loop(timeout = 1, count = 1)
-                return score
+            if self.heroCol + moveH < self.width and self.heroCol + moveH > 0:
+                if self.level_grid[self.heroRow + moveV][self.heroCol + moveH] != '&' and self.level_grid[self.heroRow + moveV][self.heroCol + moveH] != '#' :
+                    self.move_hero(moveV, moveH)
+                    self.socket.buildPacket("mP", "-1," + str(moveH) + "," + str(moveV))
+                    moveV = 0
+                    moveH = 0
+                else:
+                    self.socket.buildPacket("end", score)
+                    asyncore.loop(timeout = 1, count = 1)
+                    return score
                 
             #fire laser
             if createLaser:
