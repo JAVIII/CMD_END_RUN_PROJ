@@ -73,8 +73,9 @@ while True:  # return to menu until user chooses to quit
             newHighScore = True
             currentHighScore = score
             scoreTracker.setScore(currentHighScore) # set current high score    
-            scoreTracker.writeScore() # write current high score 	
+            scoreTracker.writeScore() # write current high score
 
+        server.reset_clients()
 #        gameMenu.gameOverLaunch(score, newHighScore)
 
     stdscr.clear()

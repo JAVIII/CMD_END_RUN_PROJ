@@ -76,3 +76,7 @@ class ServerUDP(asyncore.dispatcher):
         if self.data:
             return self.data.pop(0)
         return ""
+
+    def reset_clients(self):
+        self.clientA = None
+        self.clientB = None
