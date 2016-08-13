@@ -196,33 +196,8 @@ class menu():
                 break
 
     def waitForPlayersLaunch(self):
-        readyPlayer1 = False
-        readyPlayer2 = False
-        gameStartString = "Starting game in... "
-        row = 12
-        col = 27
-
-        if len(self.waitingChars) == 0:
-            self.waitingChars = self.readFile(self.waitingFile)
-
-        self.renderScreen(self.waitingChars)
-
-        # integrate with netcode to detect player connections if possible
-        while not readyPlayer1 and not readyPlayer2:
-            readyPlayer1 = True
-            readyPlayer2 = True
-
-        # set countdown to game start
-        self.stdscr.move(row, col)
-        self.stdscr.addstr(gameStartString)
-        col += len(gameStartString)
-        self.stdscr.move(row, col)
-        self.stdscr.refresh()
-        countdown = 0 #set countdown to number of seconds to count down from
+        countdown = 9 #must be same value as countdown variable in clientMenu.py for things to sync properly!
         while countdown > 0:
-            self.stdscr.move(row, col)
-            self.stdscr.addstr(str(countdown))
-            self.stdscr.refresh()
             time.sleep(1)
             countdown -= 1
 

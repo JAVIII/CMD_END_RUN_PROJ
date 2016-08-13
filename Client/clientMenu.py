@@ -123,6 +123,8 @@ class menu():
             if uInput == -2 or uInput == 2:
                 if selectedOption == 1:
                     self.socket.buildPacket("sel", selectedOption)
+                    self.stdscr.move(20, 27)
+                    self.stdscr.addstr("Waiting for 2nd player...")
                 else:
                     return selectedOption
             elif uInput > 2:
@@ -143,6 +145,7 @@ class menu():
                 cmd, val = p.split('*')
 
                 if cmd == "start":
+
                     return int(val)
                 #move character from one point to another
 #                if cmd == "mov":
@@ -220,30 +223,48 @@ class menu():
             if c == curses.KEY_ENTER or c == 10 or c == 13:
                 break
 
-    def waitForPlayersLaunch(self):
-        readyPlayer1 = False
-        readyPlayer2 = False
-        gameStartString = "Starting game in... "
+    def waitForPlayersLaunch(self, playerA, playerB):
+
+        playerIdentString = "YOU ARE PLAYER "
+        dirLabel = "DIRECTIONS:"
+        generalDir = "Avoid collision withs terrain and enemies!"
+        playerADir = "Use up/down arrow keys to move up down."
+        playerBDir = "Use left/right arrow keys to move left/right and spacebar to fire laser"
+        gameStartStr = "Game starts in... "
+
+        if playerA:
+            playerIdentString += "A"
+        elif playerB:
+            playerIdentString += "B"
         row = 12
-        col = 27
+        col = 5
 
         if len(self.waitingChars) == 0:
             self.waitingChars = self.readFile(self.waitingFile)
 
         self.renderScreen(self.waitingChars)
 
-        # integrate with netcode to detect player connections if possible
-        while not readyPlayer1 and not readyPlayer2:
-            readyPlayer1 = True
-            readyPlayer2 = True
-
-        # set countdown to game start
         self.stdscr.move(row, col)
-        self.stdscr.addstr(gameStartString)
-        col += len(gameStartString)
+        self.stdscr.addstr(playerIdentString)
+        row += 1
+        self.stdscr.move(row, col)
+        self.stdscr.addstr(dirLabel)
+        row += 1
+        self.stdscr.move(row, col)
+        self.stdscr.addstr(generalDir)
+        row += 1
+        self.stdscr.move(row, col)
+        if playerA:
+            self.stdscr.addstr(playerADir)
+        else:
+            self.stdscr.addstr(playerBDir)
+        row += 2
+        self.stdscr.move(row, col)
+        self.stdscr.addstr(gameStartStr)
+        col += len(gameStartStr)
         self.stdscr.move(row, col)
         self.stdscr.refresh()
-        countdown = 0 #set countdown to number of seconds to count down from
+        countdown = 9 #set countdown to number of seconds to count down from
         while countdown > 0:
             self.stdscr.move(row, col)
             self.stdscr.addstr(str(countdown))

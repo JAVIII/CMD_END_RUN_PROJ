@@ -58,7 +58,7 @@ while True:  # return to menu until user chooses to quit
 
     #menuChoice = seed for levelGen
     else:
-#        gameMenu.waitForPlayersLaunch()
+        gameMenu.waitForPlayersLaunch()
         # new game setup
         grid = []
         height = 23

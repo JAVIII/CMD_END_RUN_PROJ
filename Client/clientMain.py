@@ -60,7 +60,12 @@ while True:  # return to menu until user chooses to quit
 
     #menuChoice = seed for levelGen
     else:
-#        gameMenu.waitForPlayersLaunch()
+        playerA = False
+        playerB = False
+
+        # just need a way to get player A/player B status here
+        playerB = True
+        gameMenu.waitForPlayersLaunch(playerA, playerB)
         # new game setup
         grid = []
         height = 23
