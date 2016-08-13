@@ -45,6 +45,10 @@ class ServerUDP(asyncore.dispatcher):
 		
 	#update packets for A and B
     def buildPacket(self, command, value):
+        self.buildAPacket(command, value)
+        self.buildBPacket(command, value)
+
+    def buildAPacket(self, command, value):
         if self.bufferA != "":
             self.bufferA += '|'
             self.bufferA += str(command)
@@ -55,6 +59,7 @@ class ServerUDP(asyncore.dispatcher):
             self.bufferA += "*"
             self.bufferA += str(value)
 
+    def buildBPacket(self, command, value):
         if self.bufferB != "":
             self.bufferB += '|'
             self.bufferB += str(command)
@@ -64,6 +69,7 @@ class ServerUDP(asyncore.dispatcher):
             self.bufferB += str(command)
             self.bufferB += "*"
             self.bufferB += str(value)
+
             
     #return next element in data array and remove it from the array
     def getData(self):

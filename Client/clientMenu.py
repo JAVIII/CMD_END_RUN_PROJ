@@ -101,6 +101,7 @@ class menu():
         self.stdscr.refresh()
             
     def menuLaunch(self):
+        clientA = False
         if len(self.menuChars) == 0:
             self.menuChars = self.readFile(self.menuFile)
 
@@ -145,8 +146,9 @@ class menu():
                 cmd, val = p.split('*')
 
                 if cmd == "start":
-
-                    return int(val)
+                    return int(val), clientA
+                elif cmd == "A":
+                    clientA = True
                 #move character from one point to another
 #                if cmd == "mov":
 #                    newRow, selected = val.split(',')

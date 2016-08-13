@@ -136,8 +136,10 @@ class menu():
                 if cmd == "sel":
                     if client == str(self.socket.clientA):
                         readyA = True
+                        self.socket.buildAPacket("A", 0)
                     if  client == str(self.socket.clientB):
                         readyB = True
+                        self.socket.buildBPacket("B", 0)
                     if readyA and readyB:
                         random.random()
                         seed = random.randint(0, sys.maxint)

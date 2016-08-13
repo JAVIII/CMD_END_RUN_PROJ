@@ -49,9 +49,10 @@ currentHighScore = scoreTracker.getScore()
 
 
 while True:  # return to menu until user chooses to quit
-
+    clientA = False
+    clientB = False
     newHighScore = False
-    menuChoice = gameMenu.menuLaunch() 
+    menuChoice, clientA = gameMenu.menuLaunch()
     if menuChoice == quitChoice:
         break
 
@@ -60,12 +61,10 @@ while True:  # return to menu until user chooses to quit
 
     #menuChoice = seed for levelGen
     else:
-        playerA = False
-        playerB = False
+        if not clientA:
+            clientB = True
 
-        # just need a way to get player A/player B status here
-        playerB = True
-        gameMenu.waitForPlayersLaunch(playerA, playerB)
+        gameMenu.waitForPlayersLaunch(clientA, clientB)
         # new game setup
         grid = []
         height = 23
