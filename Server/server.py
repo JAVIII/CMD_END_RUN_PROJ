@@ -1,11 +1,11 @@
 import socket, asyncore
 
 class ServerUDP(asyncore.dispatcher):
-    def __init__(self, host, port):
+    def __init__(self, port):
         asyncore.dispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.set_reuse_addr()
-        self.bind((host, port))
+        self.bind(('', port))
         self.clientA = None
         self.clientB = None
         self.bufferA = ""

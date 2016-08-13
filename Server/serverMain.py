@@ -14,6 +14,7 @@
 #                          viewed from the main menu.
 
 import curses
+import ConfigParser
 from serverLevel import LevelGen
 from serverMenu import menu
 from highscore import highScore
@@ -37,8 +38,13 @@ hScoreFile = "highscore.txt"
 gameOverFile = "gameover.txt"
 waitingFile = "waitforplayers.txt"
 
-#temp, server always running on localhost port 8080
-server = ServerUDP('localhost', 8080)
+#find server port to use
+config = ConfigParser.RawConfigParser()
+config.read("serverdat.cfg")
+
+port = config.getint("Server", "port")
+
+server = ServerUDP(port)
 
 gameMenu = menu(menuFile, hScoreFile, gameOverFile, waitingFile, server,  stdscr)
 scoreTracker = highScore("highscore.xml")
